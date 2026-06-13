@@ -48,6 +48,9 @@ class AppFlowTest {
         compose.onNodeWithText("Training background").assertIsDisplayed()
         compose.onNodeWithText("Next").performClick()
 
+        compose.onNodeWithText("Choose your program").assertIsDisplayed()
+        compose.onNodeWithText("Next").performClick()
+
         compose.onNodeWithText("Set your starting weights").assertIsDisplayed()
         compose.onNodeWithText("Next").performClick()
 

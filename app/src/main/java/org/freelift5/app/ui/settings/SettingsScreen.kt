@@ -26,6 +26,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -42,6 +43,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import java.nio.charset.StandardCharsets
+import org.freelift5.app.domain.BuiltInPrograms
+import org.freelift5.app.domain.ProgramDefinition
 import org.freelift5.app.domain.UnitSystem
 import org.freelift5.app.domain.WeightMath
 import org.freelift5.app.export.CsvExport
@@ -66,6 +69,8 @@ fun SettingsScreen(
     val exportSessions = listOfNotNull(state.activeWorkout) + state.history
     var showBarWeight by remember { mutableStateOf(false) }
     var showClear by remember { mutableStateOf(false) }
+    var showProgramPicker by remember { mutableStateOf(false) }
+    var pendingProgramSwitch by remember { mutableStateOf<ProgramDefinition?>(null) }
     var pendingPermission by remember { mutableStateOf<PermissionPurpose?>(null) }
     var pendingExport by remember { mutableStateOf<ByteArray?>(null) }
 
@@ -148,6 +153,29 @@ fun SettingsScreen(
                 ),
                 onClick = { showBarWeight = true },
             )
+        }
+
+        SettingsSection("Training program") {
+            Text(state.activeProgram.name, fontWeight = FontWeight.SemiBold)
+            Text(
+                state.activeProgram.summary,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            if (state.activeWorkout != null) {
+                Text(
+                    "Finish your active workout before switching programs.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            OutlinedButton(
+                onClick = { showProgramPicker = true },
+                enabled = state.activeWorkout == null,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text("Change program")
+            }
         }
 
         SettingsSection("Rest timers") {
@@ -385,6 +413,70 @@ fun SettingsScreen(
                 }
             },
             dismissButton = { TextButton(onClick = { showClear = false }) { Text("Cancel") } },
+        )
+    }
+    if (showProgramPicker) {
+        AlertDialog(
+            onDismissRequest = { showProgramPicker = false },
+            title = { Text("Choose a program") },
+            text = {
+                Column(
+                    modifier = Modifier.verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    BuiltInPrograms.all.forEach { program ->
+                        val current = program.id == state.activeProgram.id
+                        OutlinedCard(
+                            onClick = {
+                                showProgramPicker = false
+                                if (!current) pendingProgramSwitch = program
+                            },
+                        ) {
+                            Column(Modifier.fillMaxWidth().padding(12.dp)) {
+                                Text(
+                                    program.name + if (current) "  (current)" else "",
+                                    fontWeight = FontWeight.SemiBold,
+                                )
+                                Text(
+                                    program.summary,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {},
+            dismissButton = {
+                TextButton(onClick = { showProgramPicker = false }) { Text("Close") }
+            },
+        )
+    }
+    pendingProgramSwitch?.let { program ->
+        AlertDialog(
+            onDismissRequest = { pendingProgramSwitch = null },
+            title = { Text("Switch to ${program.name}?") },
+            text = {
+                Text(
+                    "Your workout history is kept. Lifts you have been progressing keep " +
+                        "their current weight wherever the new program uses the same " +
+                        "movement; new lifts start at their default and stay editable.",
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        viewModel.switchProgram(program.id)
+                        pendingProgramSwitch = null
+                    },
+                ) {
+                    Text("Switch")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { pendingProgramSwitch = null }) { Text("Cancel") }
+            },
         )
     }
 }

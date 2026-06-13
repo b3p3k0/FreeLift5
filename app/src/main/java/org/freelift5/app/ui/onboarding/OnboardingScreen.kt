@@ -34,10 +34,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import org.freelift5.app.domain.BuiltInPrograms
 import org.freelift5.app.domain.CoreSlot
+import org.freelift5.app.domain.ProgramDefinition
 import org.freelift5.app.domain.RoutineEngine
 import org.freelift5.app.domain.UnitSystem
 import org.freelift5.app.domain.WeightMath
+import org.freelift5.app.domain.WorkoutDay
 import org.freelift5.app.ui.components.PrivacyCard
 import org.freelift5.app.ui.components.SectionTitle
 
@@ -64,9 +67,11 @@ fun OnboardingScreen(
         Long?,
         Long,
         Map<CoreSlot, Long>,
+        String,
     ) -> Unit,
 ) {
     var page by remember { mutableIntStateOf(0) }
+    var selectedProgramId by remember { mutableStateOf(BuiltInPrograms.DEFAULT_ID) }
     var unitSystem by remember { mutableStateOf(UnitSystem.POUNDS) }
     var birthMonth by remember { mutableStateOf("") }
     var birthYear by remember { mutableStateOf("") }
@@ -81,6 +86,11 @@ fun OnboardingScreen(
     }
     val reviewedWeights = remember { mutableStateMapOf<CoreSlot, String>() }
 
+    val program = BuiltInPrograms.byId(selectedProgramId)
+    val programSlots = CoreSlot.entries.filter { slot ->
+        program.days.any { day -> day.coreSlots.any { it.canonicalSlot == slot.name } }
+    }
+
     fun recalculateReview() {
         val barGrams = WeightMath.toGrams(
             barWeight.toDoubleOrNull() ?: if (unitSystem == UnitSystem.POUNDS) 45.0 else 20.0,
@@ -90,7 +100,7 @@ fun OnboardingScreen(
             if (unitSystem == UnitSystem.POUNDS) 5.0 else 2.5,
             unitSystem,
         )
-        CoreSlot.entries.forEach { slot ->
+        programSlots.forEach { slot ->
             val input = liftInputs.getValue(slot)
             val suggested = when (input.method) {
                 StartMethod.EMPTY_BAR -> barGrams
@@ -134,8 +144,8 @@ fun OnboardingScreen(
                     }
                     Button(
                         onClick = {
-                            if (page == 3) recalculateReview()
-                            if (page < 4) {
+                            if (page == 4) recalculateReview()
+                            if (page < 5) {
                                 page++
                             } else {
                                 val fallbackBar = if (unitSystem == UnitSystem.POUNDS) 45.0 else 20.0
@@ -153,18 +163,19 @@ fun OnboardingScreen(
                                         WeightMath.toGrams(it, unitSystem)
                                     },
                                     barGrams,
-                                    CoreSlot.entries.associateWith { slot ->
+                                    programSlots.associateWith { slot ->
                                         WeightMath.toGrams(
                                             reviewedWeights[slot]?.toDoubleOrNull() ?: fallbackBar,
                                             unitSystem,
                                         )
                                     },
+                                    selectedProgramId,
                                 )
                             }
                         },
                         modifier = Modifier.weight(1f),
                     ) {
-                        Text(if (page == 4) "Start FreeLift5" else "Next")
+                        Text(if (page == 5) "Start FreeLift5" else "Next")
                     }
                 }
             }
@@ -196,8 +207,13 @@ fun OnboardingScreen(
                     selected = trainingBackground,
                     onSelect = { trainingBackground = it },
                 )
-                3 -> StartingWeightsPage(
+                3 -> ProgramPickPage(
+                    selectedId = selectedProgramId,
+                    onSelect = { selectedProgramId = it },
+                )
+                4 -> StartingWeightsPage(
                     unitSystem = unitSystem,
+                    slots = programSlots,
                     barWeight = barWeight,
                     onBarWeightChange = { barWeight = it },
                     inputs = liftInputs,
@@ -205,6 +221,8 @@ fun OnboardingScreen(
                 )
                 else -> ReviewPage(
                     unitSystem = unitSystem,
+                    program = program,
+                    slots = programSlots,
                     weights = reviewedWeights,
                     onWeightChange = { slot, value -> reviewedWeights[slot] = value },
                 )
@@ -359,6 +377,7 @@ private fun BackgroundPage(
 @Composable
 private fun StartingWeightsPage(
     unitSystem: UnitSystem,
+    slots: List<CoreSlot>,
     barWeight: String,
     onBarWeightChange: (String) -> Unit,
     inputs: Map<CoreSlot, LiftInput>,
@@ -384,7 +403,14 @@ private fun StartingWeightsPage(
             singleLine = true,
             modifier = Modifier.fillMaxWidth(),
         )
-        CoreSlot.entries.forEach { slot ->
+        if (slots.isEmpty()) {
+            Text(
+                "This program uses dumbbells. Each lift starts light and is fully " +
+                    "editable later from the Program tab.",
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        slots.forEach { slot ->
             val input = inputs.getValue(slot)
             Card {
                 Column(
@@ -451,6 +477,8 @@ private fun StartingWeightsPage(
 @Composable
 private fun ReviewPage(
     unitSystem: UnitSystem,
+    program: ProgramDefinition,
+    slots: List<CoreSlot>,
     weights: Map<CoreSlot, String>,
     onWeightChange: (CoreSlot, String) -> Unit,
 ) {
@@ -467,10 +495,9 @@ private fun ReviewPage(
             subtitle = "Suggested starts use 60% of estimated 1RM, rounded down. " +
                 "Change anything here.",
         )
-        WorkoutTypeCard("Workout A", listOf(CoreSlot.SQUAT, CoreSlot.BENCH_PRESS, CoreSlot.BARBELL_ROW))
-        WorkoutTypeCard("Workout B", listOf(CoreSlot.SQUAT, CoreSlot.OVERHEAD_PRESS, CoreSlot.DEADLIFT))
+        program.days.forEach { day -> DayPreviewCard(day) }
         HorizontalDivider()
-        CoreSlot.entries.forEach { slot ->
+        slots.forEach { slot ->
             OutlinedTextField(
                 value = weights[slot].orEmpty(),
                 onValueChange = { onWeightChange(slot, it) },
@@ -496,7 +523,49 @@ private fun ReviewPage(
 }
 
 @Composable
-private fun WorkoutTypeCard(title: String, slots: List<CoreSlot>) {
+private fun ProgramPickPage(
+    selectedId: String,
+    onSelect: (String) -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(24.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        SectionTitle(
+            "Choose your program",
+            subtitle = "You can switch later in Settings. History is kept when you do.",
+        )
+        BuiltInPrograms.all.forEach { program ->
+            Card(onClick = { onSelect(program.id) }) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    RadioButton(
+                        selected = selectedId == program.id,
+                        onClick = { onSelect(program.id) },
+                    )
+                    Column {
+                        Text(program.name, fontWeight = FontWeight.SemiBold)
+                        Text(
+                            program.summary,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun DayPreviewCard(day: WorkoutDay) {
     Card {
         Column(
             modifier = Modifier
@@ -504,10 +573,19 @@ private fun WorkoutTypeCard(title: String, slots: List<CoreSlot>) {
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
-            Text(title, fontWeight = FontWeight.Bold)
-            slots.forEach { slot ->
-                val prescription = if (slot == CoreSlot.DEADLIFT) "1x5" else "5x5"
-                Text("${RoutineEngine.builtInExercises.getValue(slot).name}  $prescription")
+            Text(day.label, fontWeight = FontWeight.Bold)
+            day.coreSlots.forEach { slot ->
+                val name = BuiltInPrograms.Catalog.byId(slot.exerciseId)?.name ?: slot.exerciseId
+                Text("$name  ${slot.setScheme.workSets}x${slot.setScheme.targetReps}")
+            }
+            day.accessories.forEach { accessory ->
+                val name = BuiltInPrograms.Catalog.byId(accessory.exerciseId)?.name
+                    ?: accessory.exerciseId
+                Text(
+                    "$name  ${accessory.sets}x${accessory.target}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
         }
     }

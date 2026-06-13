@@ -111,6 +111,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         bodyWeightGrams: Long?,
         barWeightGrams: Long,
         startingWeights: Map<CoreSlot, Long>,
+        programId: String,
     ) = launchAction {
         repository.completeOnboarding(
             unitSystem = unitSystem,
@@ -121,6 +122,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
             bodyWeightGrams = bodyWeightGrams,
             barWeightGrams = barWeightGrams,
             startingWeights = startingWeights,
+            programId = programId,
         )
     }
 
