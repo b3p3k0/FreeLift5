@@ -5,18 +5,6 @@ import org.junit.Test
 
 class RoutineEngineTest {
     @Test
-    fun canonicalWorkoutsHaveExpectedOrder() {
-        assertEquals(
-            listOf(CoreSlot.SQUAT, CoreSlot.BENCH_PRESS, CoreSlot.BARBELL_ROW),
-            RoutineEngine.slotsFor(WorkoutType.A),
-        )
-        assertEquals(
-            listOf(CoreSlot.SQUAT, CoreSlot.OVERHEAD_PRESS, CoreSlot.DEADLIFT),
-            RoutineEngine.slotsFor(WorkoutType.B),
-        )
-    }
-
-    @Test
     fun deadliftDefaultsToOneSetAndTenPoundIncrement() {
         val prescription = RoutineEngine.defaultPrescription(
             CoreSlot.DEADLIFT,

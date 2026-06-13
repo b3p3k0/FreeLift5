@@ -15,7 +15,6 @@ import org.freelift5.app.domain.SetPerformance
 import org.freelift5.app.domain.TrackingMode
 import org.freelift5.app.domain.UnitSystem
 import org.freelift5.app.domain.WeightMath
-import org.freelift5.app.domain.WorkoutType
 
 class FreeLiftRepository(
     private val database: FreeLiftDatabase,
@@ -363,7 +362,7 @@ class FreeLiftRepository(
     suspend fun addAccessory(
         name: String,
         trackingMode: TrackingMode,
-        workoutTypes: Set<WorkoutType>,
+        workoutTypes: Set<String>,
         sets: Int,
         target: Int,
         startingWeightGrams: Long,
@@ -384,12 +383,12 @@ class FreeLiftRepository(
                     notes = notes.trim(),
                 ),
             )
-            workoutTypes.forEach { workoutType ->
-                val nextOrder = dao.getAccessories(workoutType.name).size
+            workoutTypes.forEach { dayKey ->
+                val nextOrder = dao.getAccessories(dayKey).size
                 dao.upsertAccessory(
                     AccessoryAssignmentEntity(
                         id = UUID.randomUUID().toString(),
-                        workoutType = workoutType.name,
+                        workoutType = dayKey,
                         exerciseId = exerciseId,
                         orderIndex = nextOrder,
                         sets = sets,
@@ -465,13 +464,13 @@ class FreeLiftRepository(
 
     suspend fun splitCoreSlotForWorkout(
         slotKey: String,
-        workoutType: WorkoutType,
+        dayKey: String,
     ): String = database.withTransaction {
         val original = dao.getCoreSlot(slotKey)
             ?: error("Core slot $slotKey does not exist.")
-        val mapping = dao.getWorkoutCoreSlot(slotKey, workoutType.name)
-            ?: error("Core slot $slotKey is not used by workout ${workoutType.name}.")
-        val newKey = "${original.canonicalSlot}_${workoutType.name}_${UUID.randomUUID()}"
+        val mapping = dao.getWorkoutCoreSlot(slotKey, dayKey)
+            ?: error("Core slot $slotKey is not used by workout $dayKey.")
+        val newKey = "${original.canonicalSlot}_${dayKey}_${UUID.randomUUID()}"
         dao.upsertCoreSlots(listOf(original.copy(slotKey = newKey)))
         dao.updateWorkoutCoreSlot(mapping.copy(slotKey = newKey))
         newKey

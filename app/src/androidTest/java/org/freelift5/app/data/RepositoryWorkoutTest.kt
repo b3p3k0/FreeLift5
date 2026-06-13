@@ -10,7 +10,6 @@ import org.freelift5.app.domain.CoreSlot
 import org.freelift5.app.domain.RoutineEngine
 import org.freelift5.app.domain.UnitSystem
 import org.freelift5.app.domain.WeightMath
-import org.freelift5.app.domain.WorkoutType
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -204,7 +203,7 @@ class RepositoryWorkoutTest {
         repository.addAccessory(
             name = "Plank ${UUID.randomUUID()}",
             trackingMode = org.freelift5.app.domain.TrackingMode.TIME,
-            workoutTypes = setOf(WorkoutType.A),
+            workoutTypes = setOf("A"),
             sets = 1,
             target = 30,
             startingWeightGrams = 0,
@@ -244,7 +243,7 @@ class RepositoryWorkoutTest {
         repository.addAccessory(
             name = "Weighted carry ${UUID.randomUUID()}",
             trackingMode = org.freelift5.app.domain.TrackingMode.WEIGHT,
-            workoutTypes = setOf(WorkoutType.A),
+            workoutTypes = setOf("A"),
             sets = 2,
             target = 8,
             startingWeightGrams = target,

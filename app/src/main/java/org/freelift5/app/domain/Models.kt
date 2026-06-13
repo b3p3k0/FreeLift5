@@ -5,13 +5,6 @@ enum class UnitSystem {
     KILOGRAMS,
 }
 
-enum class WorkoutType {
-    A,
-    B;
-
-    fun next(): WorkoutType = if (this == A) B else A
-}
-
 enum class CoreSlot {
     SQUAT,
     BENCH_PRESS,
@@ -41,14 +34,6 @@ data class ExercisePrescription(
     val incrementGrams: Long,
     val successfulRestSeconds: Int = 180,
     val failedRestSeconds: Int = 300,
-)
-
-data class CoreAssignment(
-    val slot: CoreSlot,
-    val workoutType: WorkoutType,
-    val exercise: ExerciseDefinition,
-    val prescription: ExercisePrescription,
-    val targetWeightGrams: Long,
 )
 
 data class SetPerformance(

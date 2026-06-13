@@ -43,7 +43,6 @@ import org.freelift5.app.data.CoreSlotSummary
 import org.freelift5.app.domain.TrackingMode
 import org.freelift5.app.domain.UnitSystem
 import org.freelift5.app.domain.WeightMath
-import org.freelift5.app.domain.WorkoutType
 import org.freelift5.app.ui.AppUiState
 import org.freelift5.app.ui.AppViewModel
 import org.freelift5.app.ui.components.SectionTitle
@@ -78,15 +77,15 @@ fun ProgramScreen(
             )
         }
         Text("Core Program", style = MaterialTheme.typography.titleLarge)
-        WorkoutType.entries.forEach { workoutType ->
+        state.activeProgram.days.forEach { day ->
             Card {
                 Column(
                     modifier = Modifier.padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
-                    Text("Workout ${workoutType.name}", fontWeight = FontWeight.Bold)
+                    Text(day.label, fontWeight = FontWeight.Bold)
                     state.coreProgram
-                        .filter { it.workoutType == workoutType.name }
+                        .filter { it.workoutType == day.key }
                         .sortedBy { it.orderIndex }
                         .forEach { slot ->
                             OutlinedCard(onClick = { selectedCore = slot }) {
@@ -111,10 +110,24 @@ fun ProgramScreen(
                                 }
                             }
                         }
+                    val required = state.accessories
+                        .filter { it.required && it.workoutType == day.key }
+                        .sortedBy { it.orderIndex }
+                    if (required.isNotEmpty()) {
+                        Text(
+                            "Assistance (part of the plan)",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        required.forEach { accessory ->
+                            Text("${accessory.exerciseName}  ${accessorySummary(accessory)}")
+                        }
+                    }
                 }
             }
         }
         HorizontalDivider()
+        val optionalAccessories = state.accessories.filterNot { it.required }
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -126,13 +139,14 @@ fun ProgramScreen(
                 Text(" Add")
             }
         }
-        if (state.accessories.isEmpty()) {
+        if (optionalAccessories.isEmpty()) {
             Text(
-                "No accessory exercises. Add curls, calf raises, crunches, adaptations, or whatever fits your training.",
+                "Optional extras you add yourself: curls, calf raises, crunches, " +
+                    "adaptations, or whatever fits your training.",
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        state.accessories.groupBy { it.exerciseId }.forEach { (_, assignments) ->
+        optionalAccessories.groupBy { it.exerciseId }.forEach { (_, assignments) ->
             val first = assignments.first()
             OutlinedCard {
                 Row(
@@ -189,7 +203,7 @@ fun ProgramScreen(
                 selectedCore = null
             },
             onSplit = {
-                viewModel.splitCoreSlot(slot.slotKey, WorkoutType.valueOf(slot.workoutType))
+                viewModel.splitCoreSlot(slot.slotKey, slot.workoutType)
                 selectedCore = null
             },
         )
@@ -202,7 +216,7 @@ fun ProgramScreen(
                 Text(
                     "This remains core work, appears in the same workout slot, and affects progression. " +
                         if (state.coreProgram.count { it.slotKey == slot.slotKey } > 1) {
-                            "This shared slot currently changes both Workout A and B."
+                            "This shared slot changes every workout it appears in."
                         } else {
                             "This change applies to Workout ${slot.workoutType}."
                         },
@@ -241,6 +255,7 @@ fun ProgramScreen(
     if (showAccessoryEditor) {
         AccessoryDialog(
             unitSystem = state.settings.unitSystem,
+            days = state.activeProgram.days.map { it.key to it.label },
             onDismiss = { showAccessoryEditor = false },
             onSave = {
                     name,
@@ -326,7 +341,7 @@ private fun CoreSlotDialog(
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 Text(
-                    if (shared) "Appears in Workout A and Workout B"
+                    if (shared) "Appears in multiple workouts"
                     else "Appears in Workout ${slot.workoutType}",
                 )
                 Text("${slot.sets} sets x ${slot.reps} reps")
@@ -472,11 +487,12 @@ private fun AdaptationDialog(
 @Composable
 private fun AccessoryDialog(
     unitSystem: UnitSystem,
+    days: List<Pair<String, String>>,
     onDismiss: () -> Unit,
     onSave: (
         String,
         TrackingMode,
-        Set<WorkoutType>,
+        Set<String>,
         Int,
         Int,
         Long,
@@ -489,7 +505,7 @@ private fun AccessoryDialog(
 ) {
     var name by remember { mutableStateOf("") }
     var mode by remember { mutableStateOf(TrackingMode.WEIGHT) }
-    var workouts by remember { mutableStateOf(setOf(WorkoutType.A, WorkoutType.B)) }
+    var workouts by remember { mutableStateOf(days.map { it.first }.toSet()) }
     var sets by remember { mutableStateOf("3") }
     var target by remember { mutableStateOf("10") }
     var weight by remember { mutableStateOf("0") }
@@ -512,18 +528,14 @@ private fun AccessoryDialog(
                     label = { Text("Name") },
                     modifier = Modifier.fillMaxWidth(),
                 )
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    WorkoutType.entries.forEach { workout ->
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    days.forEach { (key, label) ->
                         FilterChip(
-                            selected = workout in workouts,
+                            selected = key in workouts,
                             onClick = {
-                                workouts = if (workout in workouts) {
-                                    workouts - workout
-                                } else {
-                                    workouts + workout
-                                }
+                                workouts = if (key in workouts) workouts - key else workouts + key
                             },
-                            label = { Text("Workout ${workout.name}") },
+                            label = { Text(label) },
                         )
                     }
                 }

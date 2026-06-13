@@ -21,19 +21,6 @@ object RoutineEngine {
         )
     }
 
-    fun slotsFor(workoutType: WorkoutType): List<CoreSlot> = when (workoutType) {
-        WorkoutType.A -> listOf(
-            CoreSlot.SQUAT,
-            CoreSlot.BENCH_PRESS,
-            CoreSlot.BARBELL_ROW,
-        )
-        WorkoutType.B -> listOf(
-            CoreSlot.SQUAT,
-            CoreSlot.OVERHEAD_PRESS,
-            CoreSlot.DEADLIFT,
-        )
-    }
-
     fun defaultPrescription(
         slot: CoreSlot,
         unitSystem: UnitSystem,
@@ -52,8 +39,5 @@ object RoutineEngine {
             incrementGrams = WeightMath.toGrams(increment, unitSystem),
         )
     }
-
-    fun emptyBarStart(barWeightGrams: Long): Map<CoreSlot, Long> =
-        CoreSlot.entries.associateWith { barWeightGrams }
 }
 

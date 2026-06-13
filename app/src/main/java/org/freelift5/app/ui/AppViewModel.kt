@@ -17,10 +17,11 @@ import org.freelift5.app.data.CoreSlotSummary
 import org.freelift5.app.data.ExerciseEntity
 import org.freelift5.app.data.ExerciseProgressPoint
 import org.freelift5.app.data.WorkoutSessionWithExercises
+import org.freelift5.app.domain.BuiltInPrograms
 import org.freelift5.app.domain.CoreSlot
+import org.freelift5.app.domain.ProgramDefinition
 import org.freelift5.app.domain.TrackingMode
 import org.freelift5.app.domain.UnitSystem
-import org.freelift5.app.domain.WorkoutType
 import org.freelift5.app.reminders.ReminderScheduler
 import org.freelift5.app.timer.RestTimerService
 import org.freelift5.app.timer.TimerStateStore
@@ -31,6 +32,7 @@ data class AppUiState(
     val exercises: List<ExerciseEntity> = emptyList(),
     val coreProgram: List<CoreSlotSummary> = emptyList(),
     val accessories: List<AccessorySummary> = emptyList(),
+    val activeProgram: ProgramDefinition = BuiltInPrograms.byId(BuiltInPrograms.DEFAULT_ID),
     val activeWorkout: WorkoutSessionWithExercises? = null,
     val history: List<WorkoutSessionWithExercises> = emptyList(),
     val measurements: List<BodyMeasurementEntity> = emptyList(),
@@ -84,6 +86,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
             exercises = program.exercises,
             coreProgram = program.coreProgram,
             accessories = program.accessories,
+            activeProgram = BuiltInPrograms.byId(program.settings.activeProgramId),
             activeWorkout = training.activeWorkout,
             history = training.history,
             measurements = training.measurements,
@@ -259,7 +262,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     fun addAccessory(
         name: String,
         trackingMode: TrackingMode,
-        workoutTypes: Set<WorkoutType>,
+        workoutTypes: Set<String>,
         sets: Int,
         target: Int,
         startingWeightGrams: Long,
@@ -321,8 +324,12 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         )
     }
 
-    fun splitCoreSlot(slotKey: String, workoutType: WorkoutType) = launchAction {
-        repository.splitCoreSlotForWorkout(slotKey, workoutType)
+    fun splitCoreSlot(slotKey: String, dayKey: String) = launchAction {
+        repository.splitCoreSlotForWorkout(slotKey, dayKey)
+    }
+
+    fun switchProgram(programId: String) = launchAction {
+        repository.switchProgram(programId)
     }
 
     fun clearAllData() = launchAction {

@@ -77,7 +77,6 @@ import org.freelift5.app.domain.TrackingMode
 import org.freelift5.app.domain.UnitSystem
 import org.freelift5.app.domain.WarmupCalculator
 import org.freelift5.app.domain.WeightMath
-import org.freelift5.app.domain.WorkoutType
 import org.freelift5.app.timer.TimerStateStore
 import org.freelift5.app.ui.AppUiState
 import org.freelift5.app.ui.AppViewModel
@@ -128,6 +127,7 @@ private fun WorkoutHome(
     onResolveDeload: (String, Long) -> Unit,
 ) {
     val dayKey = state.settings.nextWorkoutDayKey
+    val dayLabel = state.activeProgram.day(dayKey)?.label ?: "Workout $dayKey"
     val next = state.coreProgram
         .filter { it.workoutType == dayKey }
         .sortedBy { it.orderIndex }
@@ -141,7 +141,7 @@ private fun WorkoutHome(
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         SectionTitle(
-            "Next: Workout $dayKey",
+            "Next: $dayLabel",
             subtitle = "Complete what you can. Partial workouts are saved and the " +
                 "sequence advances.",
         )
