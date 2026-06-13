@@ -463,9 +463,16 @@ private fun SetConfirmationDialog(
     onSave: (Int, Long) -> Unit,
 ) {
     val trackingMode = TrackingMode.valueOf(relation.exercise.trackingMode)
+    val isBodyweight = trackingMode == TrackingMode.BODYWEIGHT
     var reps by remember { mutableStateOf(relation.exercise.targetReps.toString()) }
     var weight by remember {
-        mutableStateOf(inputNumber(relation.exercise.targetWeightGrams, unitSystem))
+        mutableStateOf(
+            if (isBodyweight && relation.exercise.targetWeightGrams == 0L) {
+                ""
+            } else {
+                inputNumber(relation.exercise.targetWeightGrams, unitSystem)
+            },
+        )
     }
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -485,6 +492,28 @@ private fun SetConfirmationDialog(
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth(),
                     )
+                } else if (isBodyweight) {
+                    OutlinedTextField(
+                        value = weight,
+                        onValueChange = { weight = it },
+                        label = {
+                            Text(
+                                "Additional weight (optional, " +
+                                    "${if (unitSystem == UnitSystem.POUNDS) "lb" else "kg"})",
+                            )
+                        },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    Text(
+                        "Last weight: " + if (relation.exercise.targetWeightGrams > 0L) {
+                            WeightMath.format(relation.exercise.targetWeightGrams, unitSystem)
+                        } else {
+                            "BW"
+                        },
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
                 }
                 OutlinedTextField(
                     value = reps,
@@ -502,7 +531,7 @@ private fun SetConfirmationDialog(
                 onClick = {
                     onSave(
                         reps.toIntOrNull()?.coerceAtLeast(0) ?: 0,
-                        if (trackingMode == TrackingMode.WEIGHT) {
+                        if (trackingMode == TrackingMode.WEIGHT || isBodyweight) {
                             WeightMath.toGrams(
                                 weight.toDoubleOrNull() ?: 0.0,
                                 unitSystem,
