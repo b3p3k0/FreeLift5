@@ -127,9 +127,9 @@ private fun WorkoutHome(
     onOpenGuides: () -> Unit,
     onResolveDeload: (String, Long) -> Unit,
 ) {
-    val workoutType = state.settings.nextWorkout
+    val dayKey = state.settings.nextWorkoutDayKey
     val next = state.coreProgram
-        .filter { it.workoutType == workoutType.name }
+        .filter { it.workoutType == dayKey }
         .sortedBy { it.orderIndex }
     var customDeload by remember { mutableStateOf<CoreSlotSummary?>(null) }
 
@@ -141,8 +141,8 @@ private fun WorkoutHome(
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         SectionTitle(
-            "Next: Workout ${workoutType.name}",
-            subtitle = "Complete what you can. Partial workouts are saved and the A/B " +
+            "Next: Workout $dayKey",
+            subtitle = "Complete what you can. Partial workouts are saved and the " +
                 "sequence advances.",
         )
         state.coreProgram
@@ -187,7 +187,7 @@ private fun WorkoutHome(
                 }
             }
         }
-        val accessories = state.accessories.filter { it.workoutType == workoutType.name }
+        val accessories = state.accessories.filter { it.workoutType == dayKey }
         if (accessories.isNotEmpty()) {
             Text("Accessory work", style = MaterialTheme.typography.titleMedium)
             accessories.forEach { accessory ->

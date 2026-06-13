@@ -18,7 +18,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         SetRecordEntity::class,
         BodyMeasurementEntity::class,
     ],
-    version = 2,
+    version = 3,
     exportSchema = true,
 )
 abstract class FreeLiftDatabase : RoomDatabase() {
@@ -30,7 +30,7 @@ abstract class FreeLiftDatabase : RoomDatabase() {
             FreeLiftDatabase::class.java,
             "freelift5.db",
         )
-            .addMigrations(MIGRATION_1_2)
+            .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
             .build()
 
         val MIGRATION_1_2 = object : Migration(1, 2) {
@@ -49,6 +49,15 @@ abstract class FreeLiftDatabase : RoomDatabase() {
                 )
                 db.execSQL(
                     "ALTER TABLE exercise_sessions ADD COLUMN nextTarget INTEGER",
+                )
+            }
+        }
+
+        val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "ALTER TABLE accessory_assignments " +
+                        "ADD COLUMN required INTEGER NOT NULL DEFAULT 0",
                 )
             }
         }

@@ -4,12 +4,13 @@ import androidx.room.withTransaction
 import java.util.UUID
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
+import org.freelift5.app.domain.BuiltInPrograms
 import org.freelift5.app.domain.CoreSlot
 import org.freelift5.app.domain.ExercisePrescription
 import org.freelift5.app.domain.ProgressionAction
 import org.freelift5.app.domain.ProgressionEngine
+import org.freelift5.app.domain.ProgramDefinition
 import org.freelift5.app.domain.ProgressionState
-import org.freelift5.app.domain.RoutineEngine
 import org.freelift5.app.domain.SetPerformance
 import org.freelift5.app.domain.TrackingMode
 import org.freelift5.app.domain.UnitSystem
@@ -32,7 +33,7 @@ class FreeLiftRepository(
     val exerciseProgress: Flow<List<ExerciseProgressPoint>> = dao.observeExerciseProgress()
 
     suspend fun seedBuiltInExercises() {
-        dao.upsertExercises(RoutineEngine.builtInExercises.values.map { exercise ->
+        dao.upsertExercises(BuiltInPrograms.Catalog.all.map { exercise ->
             ExerciseEntity(
                 id = exercise.id,
                 name = exercise.name,
@@ -52,33 +53,16 @@ class FreeLiftRepository(
         bodyWeightGrams: Long?,
         barWeightGrams: Long,
         startingWeights: Map<CoreSlot, Long>,
+        programId: String = BuiltInPrograms.DEFAULT_ID,
     ) {
         seedBuiltInExercises()
+        val program = BuiltInPrograms.byId(programId)
         database.withTransaction {
-            val coreSlots = CoreSlot.entries.map { slot ->
-                val prescription = RoutineEngine.defaultPrescription(slot, unitSystem)
-                CoreSlotEntity(
-                    slotKey = slot.name,
-                    canonicalSlot = slot.name,
-                    exerciseId = RoutineEngine.builtInExercises.getValue(slot).id,
-                    sets = prescription.sets,
-                    reps = prescription.reps,
-                    incrementGrams = prescription.incrementGrams,
-                    currentWeightGrams = startingWeights[slot] ?: barWeightGrams,
-                )
-            }
-            dao.upsertCoreSlots(coreSlots)
-            dao.upsertWorkoutCoreSlots(
-                WorkoutType.entries.flatMap { workoutType ->
-                    RoutineEngine.slotsFor(workoutType).mapIndexed { index, slot ->
-                        WorkoutCoreSlotEntity(
-                            id = "${workoutType.name}_${slot.name}",
-                            workoutType = workoutType.name,
-                            slotKey = slot.name,
-                            orderIndex = index,
-                        )
-                    }
-                },
+            materializeProgram(
+                program = program,
+                unitSystem = unitSystem,
+                startingWeights = startingWeights.mapKeys { it.key.name },
+                barWeightGrams = barWeightGrams,
             )
             bodyWeightGrams?.let {
                 dao.insertMeasurement(
@@ -98,26 +82,122 @@ class FreeLiftRepository(
                 heightMillimeters = heightMillimeters,
                 trainingBackground = trainingBackground,
                 barWeightGrams = barWeightGrams,
-                nextWorkout = WorkoutType.A,
+                activeProgramId = program.id,
+                nextWorkoutDayKey = program.firstDayKey,
             )
         }
     }
 
+    /**
+     * Switch the active program. History tables are left untouched (their immutable
+     * snapshots preserve all past workouts); only the live core slots, day mappings, and
+     * accessory assignments are replaced. Working weights carry over for any lift whose
+     * canonical slot the new program also uses.
+     */
+    suspend fun switchProgram(programId: String) {
+        if (activeWorkout.first() != null) {
+            error("Finish or discard the active workout before switching programs.")
+        }
+        val program = BuiltInPrograms.byId(programId)
+        val appSettings = settings.first()
+        seedBuiltInExercises()
+        database.withTransaction {
+            val carriedWeights = dao.getAllCoreSlots()
+                .associate { it.canonicalSlot to it.currentWeightGrams }
+            dao.deleteAllWorkoutCoreSlots()
+            dao.deleteAllCoreSlots()
+            dao.deleteAllAccessories()
+            materializeProgram(
+                program = program,
+                unitSystem = appSettings.unitSystem,
+                startingWeights = carriedWeights,
+                barWeightGrams = appSettings.barWeightGrams,
+            )
+        }
+        settingsStore.update {
+            it.copy(
+                activeProgramId = program.id,
+                nextWorkoutDayKey = program.firstDayKey,
+            )
+        }
+    }
+
+    /**
+     * Build a program's live state from its definition. Shared core slots (the same
+     * [canonicalSlot] used on more than one day) collapse to a single `core_slots` row
+     * referenced by one `workout_core_slots` row per day. Program-prescribed accessories
+     * are seeded `required = true`. Caller must run this inside a transaction.
+     */
+    private suspend fun materializeProgram(
+        program: ProgramDefinition,
+        unitSystem: UnitSystem,
+        startingWeights: Map<String, Long>,
+        barWeightGrams: Long,
+    ) {
+        val coreSlotsByKey = LinkedHashMap<String, CoreSlotEntity>()
+        val workoutCoreSlots = mutableListOf<WorkoutCoreSlotEntity>()
+        val accessories = mutableListOf<AccessoryAssignmentEntity>()
+        program.days.forEach { day ->
+            day.coreSlots.forEachIndexed { index, slot ->
+                val slotKey = slot.canonicalSlot
+                if (slotKey !in coreSlotsByKey) {
+                    coreSlotsByKey[slotKey] = CoreSlotEntity(
+                        slotKey = slotKey,
+                        canonicalSlot = slot.canonicalSlot,
+                        exerciseId = slot.exerciseId,
+                        sets = slot.setScheme.workSets,
+                        reps = slot.setScheme.targetReps,
+                        incrementGrams = slot.incrementGrams(unitSystem),
+                        currentWeightGrams = startingWeights[slot.canonicalSlot]
+                            ?: slot.defaultStartGrams(unitSystem, barWeightGrams),
+                        successfulRestSeconds = slot.successfulRestSeconds,
+                        failedRestSeconds = slot.failedRestSeconds,
+                    )
+                }
+                workoutCoreSlots += WorkoutCoreSlotEntity(
+                    id = "${day.key}_$slotKey",
+                    workoutType = day.key,
+                    slotKey = slotKey,
+                    orderIndex = index,
+                )
+            }
+            day.accessories.forEachIndexed { index, accessory ->
+                accessories += AccessoryAssignmentEntity(
+                    id = UUID.randomUUID().toString(),
+                    workoutType = day.key,
+                    exerciseId = accessory.exerciseId,
+                    orderIndex = index,
+                    sets = accessory.sets,
+                    target = accessory.target,
+                    currentWeightGrams = accessory.startGrams(unitSystem),
+                    incrementGrams = accessory.incrementGrams(unitSystem),
+                    targetIncrement = accessory.targetIncrement,
+                    progressionEverySuccesses = accessory.progressionEverySuccesses,
+                    restSeconds = accessory.restSeconds,
+                    required = true,
+                )
+            }
+        }
+        dao.upsertCoreSlots(coreSlotsByKey.values.toList())
+        dao.upsertWorkoutCoreSlots(workoutCoreSlots)
+        accessories.forEach { dao.upsertAccessory(it) }
+    }
+
     suspend fun startWorkout(): Long = database.withTransaction {
         val appSettings = settings.first()
-        val workoutType = appSettings.nextWorkout
+        val dayKey = appSettings.nextWorkoutDayKey
         val existing = activeWorkout.first()
         if (existing != null) return@withTransaction existing.session.id
 
         val sessionId = dao.insertWorkoutSession(
             WorkoutSessionEntity(
-                workoutType = workoutType.name,
+                workoutType = dayKey,
                 startedAtEpochMillis = System.currentTimeMillis(),
                 status = "ACTIVE",
             ),
         )
-        val core = dao.getCoreProgram(workoutType.name)
-        val accessory = dao.getAccessories(workoutType.name)
+        val core = dao.getCoreProgram(dayKey)
+        val accessory = dao.getAccessories(dayKey)
         val sessions = buildList {
             core.forEach { item ->
                 add(
@@ -196,13 +276,15 @@ class FreeLiftRepository(
                 ?: error("Workout session $sessionId does not exist.")
             val appSettings = settings.first()
             val deloadIncrement = defaultLoadableIncrement(appSettings.unitSystem)
-            var allCoreComplete = true
+            var allComplete = true
 
             workout.exercises.forEach { relation ->
                 val exercise = relation.exercise
                 val slotKey = exercise.coreSlotKey
                 if (slotKey == null) {
-                    updateAccessoryProgression(exercise, relation.sets)
+                    if (updateAccessoryProgression(exercise, relation.sets)) {
+                        allComplete = false
+                    }
                     return@forEach
                 }
                 val slot = dao.getCoreSlot(slotKey) ?: return@forEach
@@ -231,7 +313,7 @@ class FreeLiftRepository(
                     deloadRoundingIncrementGrams = deloadIncrement,
                 )
                 if (decision.action == ProgressionAction.RETAIN_INCOMPLETE) {
-                    allCoreComplete = false
+                    allComplete = false
                 }
                 dao.updateCoreSlot(
                     slot.copy(
@@ -251,12 +333,15 @@ class FreeLiftRepository(
             dao.updateWorkoutSession(
                 workout.session.copy(
                     completedAtEpochMillis = System.currentTimeMillis(),
-                    status = if (allCoreComplete) "COMPLETED" else "PARTIAL",
+                    status = if (allComplete) "COMPLETED" else "PARTIAL",
                     notes = notes,
                 ),
             )
             settingsStore.update {
-                it.copy(nextWorkout = WorkoutType.valueOf(workout.session.workoutType).next())
+                it.copy(
+                    nextWorkoutDayKey = BuiltInPrograms.byId(appSettings.activeProgramId)
+                        .nextDayKey(workout.session.workoutType),
+                )
             }
         }
     }
@@ -314,6 +399,7 @@ class FreeLiftRepository(
                         targetIncrement = targetIncrement,
                         progressionEverySuccesses = progressionEverySuccesses,
                         restSeconds = restSeconds,
+                        required = false,
                     ),
                 )
             }
@@ -430,16 +516,17 @@ class FreeLiftRepository(
             unitSystem,
         )
 
+    /** Returns true when this is a required accessory that was left incomplete. */
     private suspend fun updateAccessoryProgression(
         exercise: ExerciseSessionEntity,
         sets: List<SetRecordEntity>,
-    ) {
-        val assignmentId = exercise.accessoryAssignmentId ?: return
-        val assignment = dao.getAccessory(assignmentId) ?: return
+    ): Boolean {
+        val assignmentId = exercise.accessoryAssignmentId ?: return false
+        val assignment = dao.getAccessory(assignmentId) ?: return false
         val workSets = sets.filterNot(SetRecordEntity::isWarmup)
         val workSetsByNumber = workSets.associateBy(SetRecordEntity::setNumber)
         val prescribedSets = (1..exercise.targetSets).mapNotNull(workSetsByNumber::get)
-        if (prescribedSets.size < exercise.targetSets) return
+        if (prescribedSets.size < exercise.targetSets) return assignment.required
         val weighted = exercise.trackingMode == TrackingMode.WEIGHT.name
         val success = prescribedSets.all {
             it.actualReps >= exercise.targetReps &&
@@ -453,7 +540,7 @@ class FreeLiftRepository(
                     nextTarget = exercise.targetReps,
                 ),
             )
-            return
+            return false
         }
         val successes = assignment.successfulSessions + 1
         val shouldIncrease = successes >= assignment.progressionEverySuccesses
@@ -485,5 +572,6 @@ class FreeLiftRepository(
                 nextTarget = nextTarget,
             ),
         )
+        return false
     }
 }

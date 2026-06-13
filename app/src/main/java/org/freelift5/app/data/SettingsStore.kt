@@ -10,8 +10,8 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import org.freelift5.app.domain.BuiltInPrograms
 import org.freelift5.app.domain.UnitSystem
-import org.freelift5.app.domain.WorkoutType
 
 private val Context.freeLiftDataStore by preferencesDataStore(name = "freelift_settings")
 
@@ -23,7 +23,8 @@ data class AppSettings(
     val heightMillimeters: Int? = null,
     val trainingBackground: String = "NEW",
     val barWeightGrams: Long = 20_411L,
-    val nextWorkout: WorkoutType = WorkoutType.A,
+    val activeProgramId: String = BuiltInPrograms.DEFAULT_ID,
+    val nextWorkoutDayKey: String = "A",
     val soundEnabled: Boolean = true,
     val vibrationEnabled: Boolean = true,
     val visualCueEnabled: Boolean = true,
@@ -60,9 +61,8 @@ class SettingsStore(private val context: Context) {
         heightMillimeters = preferences[Keys.HEIGHT_MM]?.takeIf { it > 0 },
         trainingBackground = preferences[Keys.TRAINING_BACKGROUND] ?: "NEW",
         barWeightGrams = preferences[Keys.BAR_WEIGHT_GRAMS] ?: 20_411L,
-        nextWorkout = runCatching {
-            WorkoutType.valueOf(preferences[Keys.NEXT_WORKOUT] ?: WorkoutType.A.name)
-        }.getOrDefault(WorkoutType.A),
+        activeProgramId = preferences[Keys.ACTIVE_PROGRAM_ID] ?: BuiltInPrograms.DEFAULT_ID,
+        nextWorkoutDayKey = preferences[Keys.NEXT_WORKOUT_DAY_KEY] ?: "A",
         soundEnabled = preferences[Keys.SOUND_ENABLED] ?: true,
         vibrationEnabled = preferences[Keys.VIBRATION_ENABLED] ?: true,
         visualCueEnabled = preferences[Keys.VISUAL_CUE_ENABLED] ?: true,
@@ -93,7 +93,8 @@ class SettingsStore(private val context: Context) {
             ?: preferences.remove(Keys.HEIGHT_MM)
         preferences[Keys.TRAINING_BACKGROUND] = settings.trainingBackground
         preferences[Keys.BAR_WEIGHT_GRAMS] = settings.barWeightGrams
-        preferences[Keys.NEXT_WORKOUT] = settings.nextWorkout.name
+        preferences[Keys.ACTIVE_PROGRAM_ID] = settings.activeProgramId
+        preferences[Keys.NEXT_WORKOUT_DAY_KEY] = settings.nextWorkoutDayKey
         preferences[Keys.SOUND_ENABLED] = settings.soundEnabled
         preferences[Keys.VIBRATION_ENABLED] = settings.vibrationEnabled
         preferences[Keys.VISUAL_CUE_ENABLED] = settings.visualCueEnabled
@@ -116,7 +117,8 @@ class SettingsStore(private val context: Context) {
         val HEIGHT_MM = intPreferencesKey("height_mm")
         val TRAINING_BACKGROUND = stringPreferencesKey("training_background")
         val BAR_WEIGHT_GRAMS = longPreferencesKey("bar_weight_grams")
-        val NEXT_WORKOUT = stringPreferencesKey("next_workout")
+        val ACTIVE_PROGRAM_ID = stringPreferencesKey("active_program_id")
+        val NEXT_WORKOUT_DAY_KEY = stringPreferencesKey("next_workout_day_key")
         val SOUND_ENABLED = booleanPreferencesKey("sound_enabled")
         val VIBRATION_ENABLED = booleanPreferencesKey("vibration_enabled")
         val VISUAL_CUE_ENABLED = booleanPreferencesKey("visual_cue_enabled")

@@ -86,7 +86,106 @@ class RepositoryWorkoutTest {
             bar,
             database.dao().getCoreSlot(CoreSlot.BENCH_PRESS.name)!!.currentWeightGrams,
         )
-        assertEquals(WorkoutType.B, settingsStore.settings.first().nextWorkout)
+        assertEquals("B", settingsStore.settings.first().nextWorkoutDayKey)
+    }
+
+    @Test
+    fun switchProgramCarriesSharedWeightAndKeepsHistory() = runBlocking {
+        val bar = WeightMath.toGrams(45.0, UnitSystem.POUNDS)
+        repository.completeOnboarding(
+            unitSystem = UnitSystem.POUNDS,
+            birthMonth = null,
+            birthYear = null,
+            heightMillimeters = null,
+            trainingBackground = "NEW",
+            bodyWeightGrams = null,
+            barWeightGrams = bar,
+            startingWeights = CoreSlot.entries.associateWith { bar },
+        )
+
+        val sessionId = repository.startWorkout()
+        database.dao().getWorkout(sessionId)!!.exercises
+            .filter { it.exercise.coreSlotKey != null }
+            .forEach { relation ->
+                repeat(relation.exercise.targetSets) { index ->
+                    repository.saveSet(
+                        relation.exercise.id,
+                        index + 1,
+                        relation.exercise.targetReps,
+                        relation.exercise.targetWeightGrams,
+                    )
+                }
+            }
+        repository.finishWorkout(sessionId, "")
+        val squatWeight = database.dao().getCoreSlot(CoreSlot.SQUAT.name)!!.currentWeightGrams
+        val historyBefore = repository.history.first().size
+
+        repository.switchProgram("lite")
+
+        val squat = database.dao().getCoreSlot(CoreSlot.SQUAT.name)!!
+        assertEquals(squatWeight, squat.currentWeightGrams) // shared weight carried
+        assertEquals(2, squat.sets)                         // lite is 2x5
+        assertEquals(historyBefore, repository.history.first().size) // history intact
+        assertEquals("lite", settingsStore.settings.first().activeProgramId)
+        assertEquals("A", settingsStore.settings.first().nextWorkoutDayKey)
+    }
+
+    @Test
+    fun skippingRequiredAccessoryMakesWorkoutPartial() = runBlocking {
+        val bar = WeightMath.toGrams(45.0, UnitSystem.POUNDS)
+        repository.completeOnboarding(
+            unitSystem = UnitSystem.POUNDS,
+            birthMonth = null,
+            birthYear = null,
+            heightMillimeters = null,
+            trainingBackground = "NEW",
+            bodyWeightGrams = null,
+            barWeightGrams = bar,
+            startingWeights = CoreSlot.entries.associateWith { bar },
+            programId = "plus",
+        )
+
+        val sessionId = repository.startWorkout() // day A: cores + required accessories
+        database.dao().getWorkout(sessionId)!!.exercises
+            .filter { it.exercise.coreSlotKey != null }
+            .forEach { relation ->
+                repeat(relation.exercise.targetSets) { index ->
+                    repository.saveSet(
+                        relation.exercise.id,
+                        index + 1,
+                        relation.exercise.targetReps,
+                        relation.exercise.targetWeightGrams,
+                    )
+                }
+            }
+        // Every core lift is complete, but the required accessories were skipped.
+        repository.finishWorkout(sessionId, "")
+
+        assertEquals("PARTIAL", database.dao().getWorkout(sessionId)!!.session.status)
+    }
+
+    @Test
+    fun threeDayProgramRotatesThroughEveryDay() = runBlocking {
+        val bar = WeightMath.toGrams(45.0, UnitSystem.POUNDS)
+        repository.completeOnboarding(
+            unitSystem = UnitSystem.POUNDS,
+            birthMonth = null,
+            birthYear = null,
+            heightMillimeters = null,
+            trainingBackground = "NEW",
+            bodyWeightGrams = null,
+            barWeightGrams = bar,
+            startingWeights = CoreSlot.entries.associateWith { bar },
+            programId = "plus",
+        )
+        assertEquals("A", settingsStore.settings.first().nextWorkoutDayKey)
+
+        repository.finishWorkout(repository.startWorkout(), "")
+        assertEquals("B", settingsStore.settings.first().nextWorkoutDayKey)
+        repository.finishWorkout(repository.startWorkout(), "")
+        assertEquals("C", settingsStore.settings.first().nextWorkoutDayKey)
+        repository.finishWorkout(repository.startWorkout(), "")
+        assertEquals("A", settingsStore.settings.first().nextWorkoutDayKey)
     }
 
     @Test

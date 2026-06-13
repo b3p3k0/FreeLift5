@@ -40,6 +40,44 @@ class DatabaseMigrationTest {
         }
     }
 
+    @Test
+    fun migratesVersionTwoToVersionThree() {
+        helper.createDatabase(DATABASE_NAME, 2).use { database ->
+            database.execSQL(
+                """
+                INSERT INTO exercises
+                    (id, name, trackingMode, builtInSlot, notes, archived)
+                VALUES
+                    ('curl', 'Barbell Curl', 'WEIGHT', NULL, '', 0)
+                """.trimIndent(),
+            )
+            database.execSQL(
+                """
+                INSERT INTO accessory_assignments
+                    (id, workoutType, exerciseId, orderIndex, sets, target,
+                     currentWeightGrams, incrementGrams, targetIncrement,
+                     progressionEverySuccesses, successfulSessions, restSeconds)
+                VALUES
+                    ('acc1', 'A', 'curl', 0, 3, 8, 0, 2268, 1, 1, 0, 180)
+                """.trimIndent(),
+            )
+        }
+
+        helper.runMigrationsAndValidate(
+            DATABASE_NAME,
+            3,
+            true,
+            FreeLiftDatabase.MIGRATION_2_3,
+        ).use { database ->
+            database.query(
+                "SELECT required FROM accessory_assignments WHERE id = 'acc1'",
+            ).use { cursor ->
+                cursor.moveToFirst()
+                check(cursor.getInt(0) == 0) { "required must default to 0 after migration" }
+            }
+        }
+    }
+
     private companion object {
         const val DATABASE_NAME = "migration-test"
     }

@@ -233,7 +233,7 @@ object CsvExport {
                 settings.heightMillimeters ?: "",
                 settings.trainingBackground,
                 settings.barWeightGrams,
-                settings.nextWorkout,
+                settings.nextWorkoutDayKey,
                 settings.soundEnabled,
                 settings.vibrationEnabled,
                 settings.visualCueEnabled,

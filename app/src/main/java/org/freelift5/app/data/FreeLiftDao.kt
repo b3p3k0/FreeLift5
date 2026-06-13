@@ -103,7 +103,7 @@ interface FreeLiftDao {
                e.name AS exerciseName, e.trackingMode, e.notes, a.orderIndex,
                a.sets, a.target, a.currentWeightGrams, a.incrementGrams,
                a.targetIncrement, a.progressionEverySuccesses,
-               a.successfulSessions, a.restSeconds
+               a.successfulSessions, a.restSeconds, a.required
         FROM accessory_assignments a
         JOIN exercises e ON e.id = a.exerciseId
         ORDER BY a.workoutType, a.orderIndex
@@ -117,7 +117,7 @@ interface FreeLiftDao {
                e.name AS exerciseName, e.trackingMode, e.notes, a.orderIndex,
                a.sets, a.target, a.currentWeightGrams, a.incrementGrams,
                a.targetIncrement, a.progressionEverySuccesses,
-               a.successfulSessions, a.restSeconds
+               a.successfulSessions, a.restSeconds, a.required
         FROM accessory_assignments a
         JOIN exercises e ON e.id = a.exerciseId
         WHERE a.workoutType = :workoutType

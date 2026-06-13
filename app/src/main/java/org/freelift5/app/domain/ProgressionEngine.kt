@@ -9,6 +9,8 @@ object ProgressionEngine {
         prescription: ExercisePrescription,
         sets: List<SetPerformance>,
         deloadRoundingIncrementGrams: Long,
+        deloadAfter: Int = FAILURES_BEFORE_DELOAD,
+        deloadFactor: Double = DELOAD_FACTOR,
     ): ProgressionDecision {
         require(deloadRoundingIncrementGrams > 0) {
             "Deload rounding increment must be positive."
@@ -41,9 +43,9 @@ object ProgressionEngine {
         }
 
         val failures = state.consecutiveFailures + 1
-        if (failures >= FAILURES_BEFORE_DELOAD) {
+        if (failures >= deloadAfter) {
             val suggested = WeightMath.roundDown(
-                state.currentWeightGrams * DELOAD_FACTOR,
+                state.currentWeightGrams * deloadFactor,
                 deloadRoundingIncrementGrams,
             )
             return ProgressionDecision(

@@ -92,6 +92,7 @@ data class AccessoryAssignmentEntity(
     val progressionEverySuccesses: Int = 1,
     val successfulSessions: Int = 0,
     val restSeconds: Int = 180,
+    @ColumnInfo(defaultValue = "0") val required: Boolean = false,
 )
 
 @Entity(tableName = "workout_sessions")
@@ -210,6 +211,7 @@ data class AccessorySummary(
     val progressionEverySuccesses: Int,
     val successfulSessions: Int,
     val restSeconds: Int,
+    val required: Boolean,
 )
 
 data class ExerciseProgressPoint(
