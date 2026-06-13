@@ -50,7 +50,7 @@ Instrumented tests must pass on both API 28 (min) and API 36 (target) before a c
 
 Single-module app under `app/src/main/java/org/freelift5/app/`:
 
-- `domain/` — pure Kotlin, no Android imports: `RoutineEngine` (A/B scheduling), `ProgressionEngine` (increments, three-failure deload), `WeightMath`, `WarmupCalculator`, `PlateCalculator`. All business math lives here so it's unit-testable on the JVM.
+- `domain/` — pure Kotlin, no Android imports: `BuiltInPrograms` (the data-driven program registry and exercise catalog) and `Program` (`ProgramDefinition`/`SlotDef`/`SetScheme`/`ProgressionPolicy`), `ProgressionEngine` (increments, three-failure deload), `WeightMath`, `WarmupCalculator`, `PlateCalculator`. All business math lives here so it's unit-testable on the JVM. (`RoutineEngine` survives only as the base-program exercise definitions used by onboarding.)
 - `data/` — Room (`FreeLiftDatabase`, `FreeLiftDao`, entities/relations), `FreeLiftRepository` (the single write path, owns transactions), `SettingsStore` (DataStore preferences), `AppContainer` (manual DI — no Hilt/Koin; constructed in `FreeLiftApplication`).
 - `ui/` — Compose. One `AppViewModel` (an `AndroidViewModel` reaching `AppContainer` through the Application) exposes a single combined `AppUiState` flow; screens under `ui/workout`, `ui/progress`, `ui/settings`, `ui/program`, `ui/guides`, `ui/onboarding`. Three primary tabs: Workout, Progress, Settings; history lives inside Progress, program config inside Workout.
 - `timer/` — `TimerStateStore` persists an absolute deadline in private SharedPreferences so the rest timer survives rotation, backgrounding, and process death; `RestTimerService` is the optional foreground service.
@@ -62,8 +62,9 @@ Single-module app under `app/src/main/java/org/freelift5/app/`:
 - **Weights are integer grams (`Long`) everywhere internally.** Conversion to lb/kg happens only at input, display, and export boundaries via `WeightMath`. Never store or compute progression in display units.
 - **`ExerciseSessionEntity` is an immutable snapshot** of name, tracking mode, prescription, load, increments, and timers taken when a workout starts. Editing the program must never rewrite workout history.
 - **Core progression is keyed by core slot, not exercise.** The shared Squat slot is referenced by both workout A and B until the user explicitly splits it; replacing an exercise changes the slot's assignment but preserves the slot's program state.
-- **Every saved set is written to Room immediately** — this is what makes partial workouts and active-session recovery work. A partial workout still advances the A/B sequence, but only fully completed exercises progress.
-- **Room schema changes require a migration plus schema JSON.** Schemas are exported to `app/schemas/` (also fed to androidTest assets); the `DatabaseMigrationTest` instrumented test must cover any new version. Current version: 2.
+- **Every saved set is written to Room immediately** — this is what makes partial workouts and active-session recovery work. A partial workout still advances the program's day sequence, but only fully completed exercises progress.
+- **The active program is data, not the schema.** `BuiltInPrograms` defines programs; `FreeLiftRepository.materializeProgram`/`switchProgram` write them into core slots, day mappings, and accessory assignments. Day identity is a free-text key (`"A"`,`"B"`,`"C"`…), not an enum. Everything a program prescribes is required and gates completion; only user-added accessories are optional (`accessory_assignments.required`).
+- **Room schema changes require a migration plus schema JSON.** Schemas are exported to `app/schemas/` (also fed to androidTest assets); the `DatabaseMigrationTest` instrumented test must cover any new version. Current version: 3.
 
 ## Tests
 

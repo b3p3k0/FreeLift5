@@ -20,8 +20,10 @@ and analytics permissions.
 
 ## Features
 
-- StrongLifts-style A/B 5x5 routine with independent progression
-- Three-failure deload suggestions and partial-workout handling
+- Multiple built-in programs — Original 5x5, Lite, Mini, Plus, and a dumbbell
+  Quarantine routine — chosen at setup and switchable later without losing history
+- Independent per-lift progression, three-failure deload suggestions, and
+  partial-workout handling
 - Optional e1RM-based starting weights or empty-bar starts
 - Persistent active workouts and rest timers
 - Core adaptations and weighted, bodyweight, repetition, or timed accessories
@@ -57,8 +59,8 @@ testing. Production release signing and tagged GitHub Releases are documented in
 
 ## Verification
 
-The initial implementation is covered by 18 local unit tests and seven
-instrumented tests. The complete instrumented suite passes on:
+The implementation is covered by 26 local unit tests and 12 instrumented tests.
+The complete instrumented suite passes on:
 
 - Android 9 / API 28
 - Android 16 / API 36

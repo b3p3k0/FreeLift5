@@ -2,12 +2,33 @@
 
 ## Layers
 
-- `domain/`: pure Kotlin routine, progression, warmup, plate, and weight math.
+- `domain/`: pure Kotlin programs, progression, warmup, plate, and weight math.
 - `data/`: Room entities/DAO/repository plus DataStore preferences.
 - `ui/`: Jetpack Compose screens and the application view model.
 - `timer/`: persisted deadline state and the optional foreground timer service.
 - `reminders/`: approximate, opt-in WorkManager reminders.
 - `export/`: versioned workout/measurement CSV and ZIP creation.
+
+## Programs
+
+Programs are data, not code. `domain/BuiltInPrograms` is a registry of
+`ProgramDefinition`s — Original 5x5, Lite, Mini, Plus, and a dumbbell Quarantine
+routine — plus the built-in exercise catalog. Adding a linear program means
+appending one definition. A program is an ordered list of days, each with core
+lifts (`SlotDef`) and required assistance (`AccessoryDef`); rotation cycles the
+days, so two-, three-, and four-day programs all work without special cases.
+
+`FreeLiftRepository.materializeProgram` turns a definition into live core slots,
+day mappings, and accessory assignments. `switchProgram` swaps programs while
+leaving workout history untouched and carrying working weights for any lift whose
+canonical slot the new program reuses. Settings hold `activeProgramId` and the
+`nextWorkoutDayKey` cursor.
+
+Everything a program prescribes is required and counts toward completing a
+workout; accessories the user adds are optional (an `accessory_assignments.required`
+flag distinguishes them). Set schemes and progression policies are sealed types:
+this phase ships straight sets with per-workout linear progression and leaves
+ramped/weekly variants (Madcow, Intermediate, Ultra) for later.
 
 ## Persistence
 
