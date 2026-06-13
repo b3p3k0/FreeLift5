@@ -1,0 +1,37 @@
+# Android Studio
+.idea/
+*.iml
+
+# Gradle
+.gradle/
+.kotlin/
+build/
+**/build/
+
+# Local Android paths and signing material
+local.properties
+*.jks
+*.keystore
+keystore.properties
+
+# Native and tooling output
+.cxx/
+.externalNativeBuild/
+captures/
+/artifacts/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Claude Code workstation settings (contain machine-specific paths)
+/.claude/
+
+# Development records: plans, test/flight reports, session logs (local only)
+/dev/
+
+# Internal planning and handoff docs (local only)
+/PLAN.md
+/DECISIONS.md
+/docs/SESSION_HANDOFF.md
+/docs/mockups/
