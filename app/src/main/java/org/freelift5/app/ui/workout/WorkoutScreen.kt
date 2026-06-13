@@ -211,7 +211,7 @@ private fun WorkoutHome(
         }
         Button(
             onClick = onStart,
-            enabled = next.isNotEmpty(),
+            enabled = next.isNotEmpty() || accessories.isNotEmpty(),
             modifier = Modifier.fillMaxWidth(),
         ) {
             Text("Start workout")
