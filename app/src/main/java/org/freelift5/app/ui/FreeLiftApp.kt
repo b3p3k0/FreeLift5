@@ -1,6 +1,6 @@
 package org.freelift5.app.ui
 
-import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -26,12 +26,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.testTag
 import androidx.lifecycle.viewmodel.compose.viewModel
 import org.freelift5.app.ui.guides.ExerciseGuidesScreen
 import org.freelift5.app.ui.onboarding.OnboardingScreen
 import org.freelift5.app.ui.program.ProgramScreen
 import org.freelift5.app.ui.progress.ProgressScreen
 import org.freelift5.app.ui.settings.SettingsScreen
+import org.freelift5.app.ui.theme.AppThemeDefinition
+import org.freelift5.app.ui.theme.FreeLiftTheme
+import org.freelift5.app.ui.theme.ThemeCatalog
 import org.freelift5.app.ui.workout.WorkoutPage
 import org.freelift5.app.ui.workout.WorkoutScreen
 
@@ -49,7 +53,30 @@ fun FreeLiftApp(viewModel: AppViewModel = viewModel()) {
     val state by viewModel.uiState.collectAsState()
     val message by viewModel.message.collectAsState()
     val snackbar = remember { SnackbarHostState() }
+    val systemDark = isSystemInDarkTheme()
+    val activeTheme = ThemeCatalog.resolve(state.settings.themePreferences, systemDark)
 
+    FreeLiftTheme(theme = activeTheme) {
+        Box(Modifier.fillMaxSize().testTag("active-theme-${activeTheme.id.persistedId}")) {
+            AppContent(
+                state = state,
+                message = message,
+                snackbar = snackbar,
+                activeTheme = activeTheme,
+                viewModel = viewModel,
+            )
+        }
+    }
+}
+
+@Composable
+private fun AppContent(
+    state: AppUiState,
+    message: String?,
+    snackbar: SnackbarHostState,
+    activeTheme: AppThemeDefinition,
+    viewModel: AppViewModel,
+) {
     LaunchedEffect(message) {
         message?.let {
             snackbar.showSnackbar(it)
@@ -115,7 +142,11 @@ fun FreeLiftApp(viewModel: AppViewModel = viewModel()) {
                     )
                 }
                 RootTab.Progress -> ProgressScreen(state, viewModel)
-                RootTab.Settings -> SettingsScreen(state, viewModel)
+                RootTab.Settings -> SettingsScreen(
+                    state = state,
+                    activeTheme = activeTheme,
+                    viewModel = viewModel,
+                )
             }
         }
     }

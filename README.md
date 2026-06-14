@@ -4,7 +4,8 @@ FreeLift5 is a private-by-design, offline Android tracker for the classic 5x5
 barbell routine.
 
 The implementation and data-flow overview is in
-[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). Engineering guardrails carried
+forward from completed work are in [docs/LESSONS.md](docs/LESSONS.md).
 
 ## Privacy
 
@@ -30,6 +31,17 @@ and analytics permissions.
 - Warmups, standard-plate loading, exercise guides, history, charts, and PRs
 - Optional on-device reminders
 - Versioned CSV and ZIP exports
+- Five accessible color themes with system-following or fixed appearance
+
+## Themes
+
+FreeLift5 ships with Solarized Light and Dark, Field Manual, Pool Tile, and
+Foundry. Choose separate day and night themes or keep one theme regardless of
+the device appearance setting.
+
+[View individual theme and promotional images](docs/THEMES.md).
+
+![FreeLift5 theme comparison](docs/images/themes/theme-comparison-labeled.png)
 
 ## Development
 
@@ -59,11 +71,13 @@ testing. Production release signing and tagged GitHub Releases are documented in
 
 ## Verification
 
-The implementation is covered by 26 local unit tests and 12 instrumented tests.
-The complete instrumented suite passes on:
+The implementation is covered by 32 local unit tests and 13 instrumented tests.
+The instrumented test matrix targets:
 
 - Android 9 / API 28
 - Android 16 / API 36
+
+Run either matrix entry with `./scripts/test-avd.sh <avd-name>`.
 
 Device coverage includes Room migration, routine and accessory progression,
 partial-workout recovery, onboarding and navigation, active-session persistence,
