@@ -20,31 +20,126 @@ object BuiltInPrograms {
     object Catalog {
         // The five barbell lifts. Ids and names match RoutineEngine.builtInExercises so
         // existing rows and history stay consistent.
-        val SQUAT = ExerciseDefinition("core_squat", "Back Squat", TrackingMode.WEIGHT, CoreSlot.SQUAT)
-        val BENCH = ExerciseDefinition("core_bench_press", "Bench Press", TrackingMode.WEIGHT, CoreSlot.BENCH_PRESS)
-        val ROW = ExerciseDefinition("core_barbell_row", "Barbell Row", TrackingMode.WEIGHT, CoreSlot.BARBELL_ROW)
-        val OHP = ExerciseDefinition("core_overhead_press", "Overhead Press", TrackingMode.WEIGHT, CoreSlot.OVERHEAD_PRESS)
-        val DEADLIFT = ExerciseDefinition("core_deadlift", "Deadlift", TrackingMode.WEIGHT, CoreSlot.DEADLIFT)
+        val SQUAT = ExerciseDefinition(
+            "core_squat",
+            "Back Squat",
+            TrackingMode.WEIGHT,
+            CoreSlot.SQUAT,
+            EquipmentKind.BARBELL,
+        )
+        val BENCH = ExerciseDefinition(
+            "core_bench_press",
+            "Bench Press",
+            TrackingMode.WEIGHT,
+            CoreSlot.BENCH_PRESS,
+            EquipmentKind.BARBELL,
+        )
+        val ROW = ExerciseDefinition(
+            "core_barbell_row",
+            "Barbell Row",
+            TrackingMode.WEIGHT,
+            CoreSlot.BARBELL_ROW,
+            EquipmentKind.BARBELL,
+        )
+        val OHP = ExerciseDefinition(
+            "core_overhead_press",
+            "Overhead Press",
+            TrackingMode.WEIGHT,
+            CoreSlot.OVERHEAD_PRESS,
+            EquipmentKind.BARBELL,
+        )
+        val DEADLIFT = ExerciseDefinition(
+            "core_deadlift",
+            "Deadlift",
+            TrackingMode.WEIGHT,
+            CoreSlot.DEADLIFT,
+            EquipmentKind.BARBELL,
+        )
 
         // Plus assistance movements.
-        val INCLINE_BENCH = ExerciseDefinition("bb_incline_bench", "Incline Bench Press", TrackingMode.WEIGHT)
-        val DIPS = ExerciseDefinition("dips", "Dips", TrackingMode.BODYWEIGHT)
-        val PULL_UPS = ExerciseDefinition("pull_ups", "Pull-ups", TrackingMode.BODYWEIGHT)
+        val INCLINE_BENCH = ExerciseDefinition(
+            "bb_incline_bench",
+            "Incline Bench Press",
+            TrackingMode.WEIGHT,
+            equipment = EquipmentKind.BARBELL,
+        )
+        val DIPS = ExerciseDefinition(
+            "dips",
+            "Dips",
+            TrackingMode.BODYWEIGHT,
+            equipment = EquipmentKind.BODYWEIGHT,
+        )
+        val PULL_UPS = ExerciseDefinition(
+            "pull_ups",
+            "Pull-ups",
+            TrackingMode.BODYWEIGHT,
+            equipment = EquipmentKind.BODYWEIGHT,
+        )
         val SITUPS = ExerciseDefinition("situps", "Situps", TrackingMode.REPETITIONS)
-        val SKULLCRUSHER = ExerciseDefinition("skullcrusher", "Skullcrusher", TrackingMode.WEIGHT)
-        val BARBELL_CURL = ExerciseDefinition("bb_curl", "Barbell Curl", TrackingMode.WEIGHT)
-        val CALF_RAISE = ExerciseDefinition("calf_raise", "Calf Raise", TrackingMode.WEIGHT)
+        val SKULLCRUSHER = ExerciseDefinition(
+            "skullcrusher",
+            "Skullcrusher",
+            TrackingMode.WEIGHT,
+            equipment = EquipmentKind.BARBELL,
+        )
+        val BARBELL_CURL = ExerciseDefinition(
+            "bb_curl",
+            "Barbell Curl",
+            TrackingMode.WEIGHT,
+            equipment = EquipmentKind.BARBELL,
+        )
+        val CALF_RAISE = ExerciseDefinition(
+            "calf_raise",
+            "Calf Raise",
+            TrackingMode.WEIGHT,
+            equipment = EquipmentKind.BARBELL,
+        )
         val PALLOF_PRESS = ExerciseDefinition("pallof_press", "Pallof Press", TrackingMode.REPETITIONS)
         val PLANK = ExerciseDefinition("plank", "Plank", TrackingMode.TIME)
 
-        // Dumbbell movements (Quarantine, and shared Plus assistance).
-        val DB_BENCH = ExerciseDefinition("db_bench", "Dumbbell Bench Press", TrackingMode.WEIGHT)
-        val DB_INCLINE = ExerciseDefinition("db_incline_bench", "Dumbbell Incline Press", TrackingMode.WEIGHT)
-        val DB_ROW = ExerciseDefinition("db_row", "Dumbbell Row", TrackingMode.WEIGHT)
-        val DB_OHP = ExerciseDefinition("db_overhead_press", "Dumbbell Overhead Press", TrackingMode.WEIGHT)
-        val DB_LUNGE = ExerciseDefinition("db_lunge", "Dumbbell Lunge", TrackingMode.WEIGHT)
-        val DB_RDL = ExerciseDefinition("db_romanian_deadlift", "Dumbbell Romanian Deadlift", TrackingMode.WEIGHT)
-        val DB_CURL = ExerciseDefinition("db_curl", "Dumbbell Curl", TrackingMode.WEIGHT)
+        // Dumbbell movements (5xOTG, and shared Plus assistance).
+        val DB_BENCH = ExerciseDefinition(
+            "db_bench",
+            "Dumbbell Bench Press",
+            TrackingMode.WEIGHT,
+            equipment = EquipmentKind.DUMBBELL,
+        )
+        val DB_INCLINE = ExerciseDefinition(
+            "db_incline_bench",
+            "Dumbbell Incline Press",
+            TrackingMode.WEIGHT,
+            equipment = EquipmentKind.DUMBBELL,
+        )
+        val DB_ROW = ExerciseDefinition(
+            "db_row",
+            "Dumbbell Row",
+            TrackingMode.WEIGHT,
+            equipment = EquipmentKind.DUMBBELL,
+        )
+        val DB_OHP = ExerciseDefinition(
+            "db_overhead_press",
+            "Dumbbell Overhead Press",
+            TrackingMode.WEIGHT,
+            equipment = EquipmentKind.DUMBBELL,
+        )
+        val DB_LUNGE = ExerciseDefinition(
+            "db_lunge",
+            "Dumbbell Lunge",
+            TrackingMode.WEIGHT,
+            equipment = EquipmentKind.DUMBBELL,
+        )
+        val DB_RDL = ExerciseDefinition(
+            "db_romanian_deadlift",
+            "Dumbbell Romanian Deadlift",
+            TrackingMode.WEIGHT,
+            equipment = EquipmentKind.DUMBBELL,
+        )
+        val DB_CURL = ExerciseDefinition(
+            "db_curl",
+            "Dumbbell Curl",
+            TrackingMode.WEIGHT,
+            equipment = EquipmentKind.DUMBBELL,
+        )
 
         val all: List<ExerciseDefinition> = listOf(
             SQUAT, BENCH, ROW, OHP, DEADLIFT,
@@ -53,6 +148,8 @@ object BuiltInPrograms {
         )
 
         fun byId(id: String): ExerciseDefinition? = all.firstOrNull { it.id == id }
+
+        fun equipmentForExercise(id: String): EquipmentKind? = byId(id)?.equipment
     }
 
     const val DEFAULT_ID = "original"
@@ -62,7 +159,7 @@ object BuiltInPrograms {
         lite(),
         mini(),
         plus(),
-        quarantine(),
+        onTheGo(),
     )
 
     fun byId(id: String): ProgramDefinition = all.firstOrNull { it.id == id } ?: original()
@@ -245,10 +342,10 @@ object BuiltInPrograms {
         ),
     )
 
-    private fun quarantine() = ProgramDefinition(
-        id = "quarantine",
-        name = "Quarantine (dumbbell)",
-        summary = "Dumbbell-and-bench routine at 5x12 — for travel or limited equipment.",
+    private fun onTheGo() = ProgramDefinition(
+        id = "on_the_go",
+        name = "5xOTG",
+        summary = "On-the-go dumbbell-and-bench routine at 5x12 for travel or limited equipment.",
         days = listOf(
             WorkoutDay(
                 key = "A",

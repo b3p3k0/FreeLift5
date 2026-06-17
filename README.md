@@ -1,10 +1,10 @@
 # FreeLift5
 
-FreeLift5 is a private-by-design, offline Android tracker for the classic 5x5
-barbell routine.
+FreeLift5 is an offline Android tracker for the classic 5x5 barbell routine.
 
 The implementation and data-flow overview is in
-[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). Engineering guardrails carried
+forward from completed work are in [docs/LESSONS.md](docs/LESSONS.md).
 
 ## Privacy
 
@@ -20,16 +20,27 @@ and analytics permissions.
 
 ## Features
 
-- Multiple built-in programs — Original 5x5, Lite, Mini, Plus, and a dumbbell
-  Quarantine routine — chosen at setup and switchable later without losing history
+- Multiple built-in programs — Original 5x5, Lite, Mini, Plus, and 5xOTG —
+  chosen at setup and switchable later without losing history
 - Independent per-lift progression, three-failure deload suggestions, and
   partial-workout handling
 - Optional e1RM-based starting weights or empty-bar starts
 - Persistent active workouts and rest timers
 - Core adaptations and weighted, bodyweight, repetition, or timed accessories
-- Warmups, standard-plate loading, exercise guides, history, charts, and PRs
+- Barbell warmups, standard-plate loading, exercise guides, history, charts, and PRs
 - Optional on-device reminders
 - Versioned CSV and ZIP exports
+- Five accessible color themes with system-following or fixed appearance
+
+## Themes
+
+FreeLift5 ships with Solarized Light and Dark, Field Manual, Pool Tile, and
+Foundry. Choose separate day and night themes or keep one theme regardless of
+the device appearance setting.
+
+[View individual theme and promotional images](docs/THEMES.md).
+
+![FreeLift5 theme comparison](docs/images/themes/theme-comparison-labeled.png)
 
 ## Development
 
@@ -59,11 +70,13 @@ testing. Production release signing and tagged GitHub Releases are documented in
 
 ## Verification
 
-The implementation is covered by 26 local unit tests and 12 instrumented tests.
-The complete instrumented suite passes on:
+The implementation is covered by 33 local unit tests and 13 instrumented tests.
+The instrumented test matrix targets:
 
 - Android 9 / API 28
 - Android 16 / API 36
+
+Run either matrix entry with `./scripts/test-avd.sh <avd-name>`.
 
 Device coverage includes Room migration, routine and accessory progression,
 partial-workout recovery, onboarding and navigation, active-session persistence,

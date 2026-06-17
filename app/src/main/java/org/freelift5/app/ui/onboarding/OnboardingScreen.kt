@@ -384,6 +384,8 @@ private fun StartingWeightsPage(
     onInputChange: (CoreSlot, LiftInput) -> Unit,
 ) {
     val suffix = if (unitSystem == UnitSystem.POUNDS) "lb" else "kg"
+    val hasBarbellSlots = slots.isNotEmpty()
+    val dumbbellStart = if (unitSystem == UnitSystem.POUNDS) "10 lb" else "5 kg"
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -396,17 +398,18 @@ private fun StartingWeightsPage(
             subtitle = "Use a recent clean set or an estimate. " +
                 "True-max testing is not required or recommended.",
         )
-        OutlinedTextField(
-            value = barWeight,
-            onValueChange = onBarWeightChange,
-            label = { Text("Empty bar weight ($suffix)") },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth(),
-        )
-        if (slots.isEmpty()) {
+        if (hasBarbellSlots) {
+            OutlinedTextField(
+                value = barWeight,
+                onValueChange = onBarWeightChange,
+                label = { Text("Empty bar weight ($suffix)") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        } else {
             Text(
-                "This program uses dumbbells. Each lift starts light and is fully " +
-                    "editable later from the Program tab.",
+                "This program uses dumbbells. Core lifts start at $dumbbellStart with conservative " +
+                    "jumps, and each movement is editable later from the Program tab.",
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
@@ -513,11 +516,19 @@ private fun ReviewPage(
                 singleLine = true,
             )
         }
-        Text(
-            "Rows and deadlifts with an empty bar should begin at normal plate height using stable blocks or rack safeties. Use a rock or something.",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+        if (slots.isNotEmpty()) {
+            Text(
+                "Rows and deadlifts with an empty bar should begin at normal plate height using stable blocks or rack safeties. Use a rock or something.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        } else {
+            Text(
+                "Dumbbell loads start light by design. Tune each movement after setup if your available pairs or handles require a different jump.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
         Spacer(Modifier.height(80.dp))
     }
 }

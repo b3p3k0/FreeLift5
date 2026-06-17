@@ -53,6 +53,7 @@ import org.freelift5.app.ui.AppUiState
 import org.freelift5.app.ui.AppViewModel
 import org.freelift5.app.ui.components.PrivacyCard
 import org.freelift5.app.ui.components.SectionTitle
+import org.freelift5.app.ui.theme.AppThemeDefinition
 
 private enum class PermissionPurpose {
     TIMER,
@@ -63,6 +64,7 @@ private enum class PermissionPurpose {
 @Composable
 fun SettingsScreen(
     state: AppUiState,
+    activeTheme: AppThemeDefinition,
     viewModel: AppViewModel,
 ) {
     val context = LocalContext.current
@@ -133,6 +135,13 @@ fun SettingsScreen(
         SectionTitle("Settings")
         PrivacyCard(
             text = "No account. No telemetry. No network access. Your data stays on your device.",
+        )
+
+        AppearanceSettingsSection(
+            preferences = state.settings.themePreferences,
+            activeTheme = activeTheme,
+            onBehaviorChange = viewModel::setThemeBehavior,
+            onThemeSelected = viewModel::setTheme,
         )
 
         SettingsSection("Units and equipment") {

@@ -48,4 +48,12 @@ class CsvExportTest {
         assertTrue("accessories-v2.csv" in entries)
         assertTrue("settings-v2.csv" in entries)
     }
+
+    @Test
+    fun settingsExportRemainsDataOnlyAndVersionTwo() {
+        val settings = CsvExport.settings(AppSettings())
+        assertTrue(settings.startsWith("schema_version,unit_system"))
+        assertTrue(settings.lines()[1].startsWith("2,"))
+        assertTrue("theme preferences stay device-local", "theme_" !in settings)
+    }
 }

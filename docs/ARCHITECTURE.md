@@ -3,17 +3,33 @@
 ## Layers
 
 - `domain/`: pure Kotlin programs, progression, warmup, plate, and weight math.
+  Exercise definitions also classify equipment so UI helpers can stay honest
+  about barbell-only and dumbbell-only behavior.
 - `data/`: Room entities/DAO/repository plus DataStore preferences.
 - `ui/`: Jetpack Compose screens and the application view model.
 - `timer/`: persisted deadline state and the optional foreground timer service.
 - `reminders/`: approximate, opt-in WorkManager reminders.
 - `export/`: versioned workout/measurement CSV and ZIP creation.
+- `theme/`: pure persisted theme identifiers and system/fixed selection rules.
+
+## Themes
+
+Five static Material 3 color schemes live in `ui/theme/ThemeCatalog`. The
+catalog defines every color role explicitly; typography, shapes, and spacing
+remain shared. `ThemePreferences` stores a light choice, dark choice, fixed
+choice, and behavior in DataStore. The app root resolves that preference against
+the current system appearance, so a Settings change recolors the complete
+Compose tree immediately.
+
+Theme preferences are presentation state, not user workout data. They are
+intentionally omitted from versioned CSV and ZIP exports. Clear all data removes
+the preferences and restores the Solarized system-following pair.
 
 ## Programs
 
 Programs are data, not code. `domain/BuiltInPrograms` is a registry of
-`ProgramDefinition`s — Original 5x5, Lite, Mini, Plus, and a dumbbell Quarantine
-routine — plus the built-in exercise catalog. Adding a linear program means
+`ProgramDefinition`s — Original 5x5, Lite, Mini, Plus, and 5xOTG — plus the
+built-in exercise catalog. Adding a linear program means
 appending one definition. A program is an ordered list of days, each with core
 lifts (`SlotDef`) and required assistance (`AccessoryDef`); rotation cycles the
 days, so two-, three-, and four-day programs all work without special cases.
@@ -61,8 +77,10 @@ the user opts into background timer alerts or reminders.
 ## Tests
 
 - Pure Kotlin unit tests cover routine defaults, progression and deloads,
-  rounding, e1RM, warmups, plate loading, reminders, and CSV escaping.
+  rounding, e1RM, warmups, plate loading, reminders, theme resolution and
+  contrast, and CSV escaping.
 - Android tests validate Room migration `1 -> 2`, repository transactions,
   partial-workout progression, weighted and timed accessories, timer persistence
-  with the screen off and notification permission denied, and the principal
-  Compose user flow. The complete suite passes on API 28 and API 36 emulators.
+  with the screen off and notification permission denied, theme persistence and
+  reset behavior, and the principal Compose user flow. The device matrix targets
+  API 28 and API 36 emulators.

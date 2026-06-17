@@ -23,6 +23,8 @@ import org.freelift5.app.domain.ProgramDefinition
 import org.freelift5.app.domain.TrackingMode
 import org.freelift5.app.domain.UnitSystem
 import org.freelift5.app.reminders.ReminderScheduler
+import org.freelift5.app.theme.AppThemeId
+import org.freelift5.app.theme.ThemeBehavior
 import org.freelift5.app.timer.RestTimerService
 import org.freelift5.app.timer.TimerStateStore
 
@@ -236,6 +238,36 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
 
     fun setBarWeight(weightGrams: Long) = updateSettings {
         it.copy(barWeightGrams = weightGrams)
+    }
+
+    fun setThemeBehavior(
+        behavior: ThemeBehavior,
+        activeTheme: AppThemeId,
+    ) = updateSettings {
+        it.copy(
+            themePreferences = it.themePreferences.copy(
+                behavior = behavior,
+                fixedTheme = if (behavior == ThemeBehavior.FIXED) {
+                    activeTheme
+                } else {
+                    it.themePreferences.fixedTheme
+                },
+            ),
+        )
+    }
+
+    fun setTheme(theme: AppThemeId) = updateSettings {
+        val preferences = it.themePreferences
+        it.copy(
+            themePreferences = when (preferences.behavior) {
+                ThemeBehavior.FIXED -> preferences.copy(fixedTheme = theme)
+                ThemeBehavior.FOLLOW_SYSTEM -> if (theme.isDark) {
+                    preferences.copy(darkTheme = theme)
+                } else {
+                    preferences.copy(lightTheme = theme)
+                }
+            },
+        )
     }
 
     fun setWorkoutReminders(

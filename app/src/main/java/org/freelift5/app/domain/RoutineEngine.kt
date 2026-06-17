@@ -18,6 +18,7 @@ object RoutineEngine {
             },
             trackingMode = TrackingMode.WEIGHT,
             builtInSlot = slot,
+            equipment = EquipmentKind.BARBELL,
         )
     }
 
@@ -40,4 +41,3 @@ object RoutineEngine {
         )
     }
 }
-

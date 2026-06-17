@@ -12,6 +12,9 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import org.freelift5.app.domain.BuiltInPrograms
 import org.freelift5.app.domain.UnitSystem
+import org.freelift5.app.theme.AppThemeId
+import org.freelift5.app.theme.ThemeBehavior
+import org.freelift5.app.theme.ThemePreferences
 
 private val Context.freeLiftDataStore by preferencesDataStore(name = "freelift_settings")
 
@@ -36,6 +39,7 @@ data class AppSettings(
     val workoutReminderMinutes: Int = 18 * 60,
     val bodyReminderEnabled: Boolean = false,
     val bodyReminderIntervalDays: Int = 14,
+    val themePreferences: ThemePreferences = ThemePreferences(),
 )
 
 class SettingsStore(private val context: Context) {
@@ -77,6 +81,13 @@ class SettingsStore(private val context: Context) {
         workoutReminderMinutes = preferences[Keys.WORKOUT_REMINDER_MINUTES] ?: 18 * 60,
         bodyReminderEnabled = preferences[Keys.BODY_REMINDER_ENABLED] ?: false,
         bodyReminderIntervalDays = preferences[Keys.BODY_REMINDER_INTERVAL] ?: 14,
+        themePreferences = ThemePreferences(
+            behavior = ThemeBehavior.fromPersisted(preferences[Keys.THEME_BEHAVIOR]),
+            lightTheme = AppThemeId.lightFromPersisted(preferences[Keys.THEME_LIGHT_ID]),
+            darkTheme = AppThemeId.darkFromPersisted(preferences[Keys.THEME_DARK_ID]),
+            fixedTheme = AppThemeId.fromPersisted(preferences[Keys.THEME_FIXED_ID])
+                ?: AppThemeId.SOLARIZED_LIGHT,
+        ),
     )
 
     private fun writeSettings(
@@ -107,6 +118,10 @@ class SettingsStore(private val context: Context) {
         preferences[Keys.WORKOUT_REMINDER_MINUTES] = settings.workoutReminderMinutes
         preferences[Keys.BODY_REMINDER_ENABLED] = settings.bodyReminderEnabled
         preferences[Keys.BODY_REMINDER_INTERVAL] = settings.bodyReminderIntervalDays
+        preferences[Keys.THEME_BEHAVIOR] = settings.themePreferences.behavior.persistedId
+        preferences[Keys.THEME_LIGHT_ID] = settings.themePreferences.lightTheme.persistedId
+        preferences[Keys.THEME_DARK_ID] = settings.themePreferences.darkTheme.persistedId
+        preferences[Keys.THEME_FIXED_ID] = settings.themePreferences.fixedTheme.persistedId
     }
 
     private object Keys {
@@ -130,5 +145,9 @@ class SettingsStore(private val context: Context) {
         val WORKOUT_REMINDER_MINUTES = intPreferencesKey("workout_reminder_minutes")
         val BODY_REMINDER_ENABLED = booleanPreferencesKey("body_reminder_enabled")
         val BODY_REMINDER_INTERVAL = intPreferencesKey("body_reminder_interval")
+        val THEME_BEHAVIOR = stringPreferencesKey("theme_behavior")
+        val THEME_LIGHT_ID = stringPreferencesKey("theme_light_id")
+        val THEME_DARK_ID = stringPreferencesKey("theme_dark_id")
+        val THEME_FIXED_ID = stringPreferencesKey("theme_fixed_id")
     }
 }

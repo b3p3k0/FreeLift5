@@ -52,6 +52,53 @@ class BuiltInProgramsTest {
     }
 
     @Test
+    fun onTheGoRejectsRetiredProgramId() {
+        val onTheGo = BuiltInPrograms.byId("on_the_go")
+        val retiredId = "quaran" + "tine"
+
+        assertEquals("on_the_go", onTheGo.id)
+        assertEquals("5xOTG", onTheGo.name)
+        assertEquals(listOf("A", "B"), onTheGo.days.map { it.key })
+        onTheGo.days.flatMap { it.coreSlots }.forEach { slot ->
+            assertEquals(5, slot.setScheme.workSets)
+            assertEquals(12, slot.setScheme.targetReps)
+        }
+        assertEquals("original", BuiltInPrograms.byId(retiredId).id)
+    }
+
+    @Test
+    fun catalogClassifiesBarbellAndDumbbellEquipment() {
+        CoreSlot.entries.forEach { slot ->
+            val exercise = BuiltInPrograms.Catalog.byId(RoutineEngine.builtInExercises.getValue(slot).id)
+            assertEquals("${slot.name} should use barbell helpers", EquipmentKind.BARBELL, exercise?.equipment)
+        }
+
+        listOf(
+            BuiltInPrograms.Catalog.DB_BENCH,
+            BuiltInPrograms.Catalog.DB_INCLINE,
+            BuiltInPrograms.Catalog.DB_ROW,
+            BuiltInPrograms.Catalog.DB_OHP,
+            BuiltInPrograms.Catalog.DB_LUNGE,
+            BuiltInPrograms.Catalog.DB_RDL,
+            BuiltInPrograms.Catalog.DB_CURL,
+        ).forEach { exercise ->
+            assertEquals("${exercise.id} should not use barbell helpers", EquipmentKind.DUMBBELL, exercise.equipment)
+            assertEquals(EquipmentKind.DUMBBELL, BuiltInPrograms.Catalog.equipmentForExercise(exercise.id))
+        }
+    }
+
+    @Test
+    fun onTheGoCoreSlotsAreDumbbellOnly() {
+        val onTheGo = BuiltInPrograms.byId("on_the_go")
+        val equipment = onTheGo.days
+            .flatMap { it.coreSlots }
+            .map { slot -> BuiltInPrograms.Catalog.equipmentForExercise(slot.exerciseId) }
+            .toSet()
+
+        assertEquals(setOf(EquipmentKind.DUMBBELL), equipment)
+    }
+
+    @Test
     fun catalogMatchesRoutineEngineBuiltIns() {
         CoreSlot.entries.forEach { slot ->
             val fromEngine = RoutineEngine.builtInExercises.getValue(slot)
@@ -59,6 +106,7 @@ class BuiltInProgramsTest {
             assertNotNull("catalog missing ${fromEngine.id}", fromCatalog)
             assertEquals(fromEngine.name, fromCatalog!!.name)
             assertEquals(slot, fromCatalog.builtInSlot)
+            assertEquals(fromEngine.equipment, fromCatalog.equipment)
         }
     }
 
