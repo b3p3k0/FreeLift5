@@ -22,3 +22,12 @@ app. Keep entries concise and tied to a concrete failure mode.
   a failed gallery run cannot leave mixed output.
 - Report device-matrix results per API level. A passing modern emulator does not
   substitute for an unavailable minimum-SDK image.
+
+## Built-In Programs
+
+- Treat built-in program IDs and names as release-facing contracts. Before the
+  first public APK, remove unsuitable IDs entirely; after release, preserve old
+  IDs with explicit aliases or migrations.
+- Drive workout helper UI from explicit exercise equipment metadata. Dumbbell
+  programs should not inherit barbell-only copy, warmup assumptions, or plate
+  calculators just because they track weight.

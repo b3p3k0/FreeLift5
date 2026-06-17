@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What This Is
 
-FreeLift5 is a private-by-design, offline Android tracker for the 5x5 barbell routine (Kotlin, Jetpack Compose, single `app` module). `docs/ARCHITECTURE.md` holds the data-flow overview.
+FreeLift5 is an offline Android tracker for the 5x5 barbell routine (Kotlin, Jetpack Compose, single `app` module). `docs/ARCHITECTURE.md` holds the data-flow overview.
 
 On the original workstation only (gitignored, absent from clones): `PLAN.md` is the approved product contract and `DECISIONS.md` is the decision ledger — when present, append new decisions there so they survive context loss.
 

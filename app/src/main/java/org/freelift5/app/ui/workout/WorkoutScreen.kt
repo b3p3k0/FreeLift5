@@ -68,6 +68,8 @@ import kotlinx.coroutines.delay
 import org.freelift5.app.data.CoreSlotSummary
 import org.freelift5.app.data.ExerciseSessionWithSets
 import org.freelift5.app.data.SetRecordEntity
+import org.freelift5.app.domain.BuiltInPrograms
+import org.freelift5.app.domain.EquipmentKind
 import org.freelift5.app.domain.ExercisePrescription
 import org.freelift5.app.domain.PlateCalculator
 import org.freelift5.app.domain.ProgressionEngine
@@ -327,8 +329,10 @@ private fun ActiveWorkout(
                 )
             }
             val mode = TrackingMode.valueOf(current.exercise.trackingMode)
+            val equipment = BuiltInPrograms.Catalog.equipmentForExercise(current.exercise.exerciseId)
+            val usesBarbell = equipment == EquipmentKind.BARBELL
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                if (current.exercise.coreSlotKey != null && mode == TrackingMode.WEIGHT) {
+                if (current.exercise.coreSlotKey != null && mode == TrackingMode.WEIGHT && usesBarbell) {
                     OutlinedButton(
                         onClick = { showWarmups = true },
                         modifier = Modifier.weight(1f),
@@ -336,14 +340,14 @@ private fun ActiveWorkout(
                         Text("Warmup")
                     }
                 }
-                if (mode == TrackingMode.WEIGHT) {
-                OutlinedButton(
-                    onClick = { showPlates = true },
-                    modifier = Modifier.weight(1f),
-                ) {
-                    Icon(Icons.Outlined.Calculate, contentDescription = null)
-                    Text(" Plates")
-                }
+                if (mode == TrackingMode.WEIGHT && usesBarbell) {
+                    OutlinedButton(
+                        onClick = { showPlates = true },
+                        modifier = Modifier.weight(1f),
+                    ) {
+                        Icon(Icons.Outlined.Calculate, contentDescription = null)
+                        Text(" Plates")
+                    }
                 }
             }
         }

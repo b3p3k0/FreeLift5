@@ -20,11 +20,19 @@ enum class TrackingMode {
     TIME,
 }
 
+enum class EquipmentKind {
+    BARBELL,
+    DUMBBELL,
+    BODYWEIGHT,
+    OTHER,
+}
+
 data class ExerciseDefinition(
     val id: String,
     val name: String,
     val trackingMode: TrackingMode,
     val builtInSlot: CoreSlot? = null,
+    val equipment: EquipmentKind = EquipmentKind.OTHER,
     val notes: String = "",
 )
 
@@ -79,4 +87,3 @@ data class WarmupSet(
     val weightGrams: Long,
     val reps: Int,
 )
-

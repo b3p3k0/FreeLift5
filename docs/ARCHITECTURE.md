@@ -3,6 +3,8 @@
 ## Layers
 
 - `domain/`: pure Kotlin programs, progression, warmup, plate, and weight math.
+  Exercise definitions also classify equipment so UI helpers can stay honest
+  about barbell-only and dumbbell-only behavior.
 - `data/`: Room entities/DAO/repository plus DataStore preferences.
 - `ui/`: Jetpack Compose screens and the application view model.
 - `timer/`: persisted deadline state and the optional foreground timer service.
@@ -26,8 +28,8 @@ the preferences and restores the Solarized system-following pair.
 ## Programs
 
 Programs are data, not code. `domain/BuiltInPrograms` is a registry of
-`ProgramDefinition`s — Original 5x5, Lite, Mini, Plus, and a dumbbell Quarantine
-routine — plus the built-in exercise catalog. Adding a linear program means
+`ProgramDefinition`s — Original 5x5, Lite, Mini, Plus, and 5xOTG — plus the
+built-in exercise catalog. Adding a linear program means
 appending one definition. A program is an ordered list of days, each with core
 lifts (`SlotDef`) and required assistance (`AccessoryDef`); rotation cycles the
 days, so two-, three-, and four-day programs all work without special cases.
