@@ -48,6 +48,9 @@ app. Keep entries concise and tied to a concrete failure mode.
 - Progress markers should not use placeholder numbers that look like completed
   data. Leave pending workout sets blank and change the marker styling only when
   a saved set exists.
+- Progress charts need visible units, compact date labels, and accessible
+  summaries. A line without axes may be decorative, but it is not useful
+  training feedback.
 
 ## Release Continuity
 

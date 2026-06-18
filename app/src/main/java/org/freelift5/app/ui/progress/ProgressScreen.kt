@@ -5,10 +5,11 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
@@ -25,19 +26,21 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import kotlin.math.roundToInt
-import org.freelift5.app.data.BodyMeasurementEntity
-import org.freelift5.app.data.ExerciseProgressPoint
 import org.freelift5.app.data.SetRecordEntity
 import org.freelift5.app.data.WorkoutSessionWithExercises
 import org.freelift5.app.domain.TrackingMode
@@ -52,13 +55,6 @@ private enum class ProgressSection {
     OVERVIEW,
     HISTORY,
     EXERCISES,
-}
-
-private enum class ExerciseMetric(val label: String) {
-    WORK_WEIGHT("Work weight"),
-    ESTIMATED_ONE_REP_MAX("Estimated 1RM"),
-    VOLUME("Volume"),
-    RELATIVE_STRENGTH("Relative strength"),
 }
 
 @Composable
@@ -137,10 +133,19 @@ private fun Overview(
                     fontWeight = FontWeight.Bold,
                 )
                 if (state.measurements.size > 1) {
+                    val chartPoints = bodyWeightChartPoints(
+                        measurements = state.measurements,
+                        unitSystem = state.settings.unitSystem,
+                    )
+                    val valueFormatter = weightValueFormatter(state.settings.unitSystem)
                     LineChart(
-                        values = state.measurements.map {
-                            WeightMath.fromGrams(it.bodyWeightGrams, state.settings.unitSystem)
-                        },
+                        points = chartPoints,
+                        valueFormatter = valueFormatter,
+                        contentDescription = chartContentDescription(
+                            title = "Body weight",
+                            points = chartPoints,
+                            valueFormatter = valueFormatter,
+                        ),
                     )
                 }
                 Button(onClick = { showMeasurement = true }) {
@@ -270,7 +275,8 @@ private fun ExerciseProgress(state: AppUiState) {
     var selectedName by remember(names) { mutableStateOf(names.firstOrNull()) }
     var metric by remember { mutableStateOf(ExerciseMetric.WORK_WEIGHT) }
     val points = state.exerciseProgress.filter { it.exerciseName == selectedName }
-    val values = metricValues(metric, points, state)
+    val chartPoints = exerciseMetricChartPoints(metric, points, state)
+    val valueFormatter = exerciseValueFormatter(metric, state.settings.unitSystem)
 
     Column(
         modifier = Modifier
@@ -309,10 +315,18 @@ private fun ExerciseProgress(state: AppUiState) {
         Card {
             Column(Modifier.fillMaxWidth().padding(16.dp)) {
                 Text(metric.label, style = MaterialTheme.typography.titleMedium)
-                if (values.isEmpty()) {
+                if (chartPoints.isEmpty()) {
                     Text("Not enough data for this metric.")
                 } else {
-                    LineChart(values)
+                    LineChart(
+                        points = chartPoints,
+                        valueFormatter = valueFormatter,
+                        contentDescription = chartContentDescription(
+                            title = "${selectedName ?: "Exercise"} ${metric.label}",
+                            points = chartPoints,
+                            valueFormatter = valueFormatter,
+                        ),
+                    )
                 }
             }
         }
@@ -332,62 +346,112 @@ private fun ExerciseProgress(state: AppUiState) {
     }
 }
 
-private fun metricValues(
-    metric: ExerciseMetric,
-    points: List<ExerciseProgressPoint>,
-    state: AppUiState,
-): List<Double> = points.mapNotNull { point ->
-    when (metric) {
-        ExerciseMetric.WORK_WEIGHT ->
-            WeightMath.fromGrams(point.targetWeightGrams, state.settings.unitSystem)
-        ExerciseMetric.ESTIMATED_ONE_REP_MAX ->
-            WeightMath.fromGrams(
-                WeightMath.epleyEstimate(point.targetWeightGrams, point.targetReps.coerceIn(1, 10)),
-                state.settings.unitSystem,
-            )
-        ExerciseMetric.VOLUME -> {
-            val workout = state.history.firstOrNull { it.session.id == point.sessionId }
-            val relation = workout?.exercises?.firstOrNull { it.exercise.exerciseId == point.exerciseId }
-            relation?.sets
-                ?.filterNot(SetRecordEntity::isWarmup)
-                ?.sumOf { WeightMath.fromGrams(it.actualWeightGrams, state.settings.unitSystem) * it.actualReps }
+@Composable
+private fun LineChart(
+    points: List<ChartPoint>,
+    valueFormatter: (Double) -> String,
+    contentDescription: String,
+) {
+    val color = MaterialTheme.colorScheme.primary
+    val gridColor = MaterialTheme.colorScheme.outlineVariant
+    val labelsColor = MaterialTheme.colorScheme.onSurfaceVariant
+    val axisLabels = chartAxisLabels(points, valueFormatter)
+    val dateLabels = chartDateLabels(points)
+    val yAxisWidth = 72.dp
+    val chartHeight = 180.dp
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .semantics { this.contentDescription = contentDescription },
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.Top,
+        ) {
+            Column(
+                modifier = Modifier
+                    .width(yAxisWidth)
+                    .height(chartHeight)
+                    .padding(vertical = 8.dp),
+                verticalArrangement = Arrangement.SpaceBetween,
+                horizontalAlignment = Alignment.End,
+            ) {
+                Text(axisLabels.max, color = labelsColor, style = MaterialTheme.typography.labelSmall)
+                Text(axisLabels.mid, color = labelsColor, style = MaterialTheme.typography.labelSmall)
+                Text(axisLabels.min, color = labelsColor, style = MaterialTheme.typography.labelSmall)
+            }
+            Canvas(
+                modifier = Modifier
+                    .weight(1f)
+                    .height(chartHeight)
+                    .padding(start = 8.dp),
+            ) {
+                if (points.isEmpty()) return@Canvas
+                val plotInset = 8.dp.toPx()
+                val plotTop = plotInset
+                val plotBottom = size.height - plotInset
+                val plotHeight = (plotBottom - plotTop).coerceAtLeast(1f)
+                listOf(plotTop, plotTop + plotHeight / 2f, plotBottom).forEach { y ->
+                    drawLine(gridColor, Offset(0f, y), Offset(size.width, y), strokeWidth = 1f)
+                }
+                val values = points.map(ChartPoint::value)
+                val min = values.minOrNull() ?: 0.0
+                val max = values.maxOrNull() ?: min
+                val range = (max - min).takeIf { it > 0.0 } ?: 1.0
+                val sorted = points.sortedBy(ChartPoint::timestampMillis)
+                val firstTimestamp = sorted.first().timestampMillis
+                val timeRange = (sorted.last().timestampMillis - firstTimestamp)
+                    .takeIf { it > 0L }
+                    ?: 1L
+                val path = Path()
+                sorted.forEachIndexed { index, point ->
+                    val x = if (sorted.size == 1) {
+                        size.width / 2f
+                    } else {
+                        size.width *
+                            ((point.timestampMillis - firstTimestamp).toDouble() / timeRange).toFloat()
+                    }
+                    val y = plotBottom - ((point.value - min) / range * plotHeight).toFloat()
+                    if (index == 0) path.moveTo(x, y) else path.lineTo(x, y)
+                    drawCircle(color, radius = 6f, center = Offset(x, y))
+                }
+                drawPath(path, color, style = Stroke(width = 5f, cap = StrokeCap.Round))
+            }
         }
-        ExerciseMetric.RELATIVE_STRENGTH -> {
-            val bodyWeight = state.measurements
-                .lastOrNull { it.recordedAtEpochMillis <= point.completedAtEpochMillis }
-                ?.bodyWeightGrams
-                ?: return@mapNotNull null
-            WeightMath.epleyEstimate(
-                point.targetWeightGrams,
-                point.targetReps.coerceIn(1, 10),
-            ).toDouble() / bodyWeight
-        }
+        XAxisLabels(labels = dateLabels, startPadding = yAxisWidth + 8.dp, color = labelsColor)
     }
 }
 
 @Composable
-private fun LineChart(values: List<Double>) {
-    val color = MaterialTheme.colorScheme.primary
-    val gridColor = MaterialTheme.colorScheme.outlineVariant
-    Canvas(
-        modifier = Modifier.fillMaxWidth().aspectRatio(2f),
+private fun XAxisLabels(
+    labels: List<String>,
+    startPadding: androidx.compose.ui.unit.Dp,
+    color: androidx.compose.ui.graphics.Color,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = startPadding),
+        horizontalArrangement = if (labels.size == 1) {
+            Arrangement.Center
+        } else {
+            Arrangement.SpaceBetween
+        },
     ) {
-        if (values.isEmpty()) return@Canvas
-        repeat(4) { index ->
-            val y = size.height * index / 3f
-            drawLine(gridColor, Offset(0f, y), Offset(size.width, y), strokeWidth = 1f)
+        labels.forEachIndexed { index, label ->
+            Text(
+                text = label,
+                color = color,
+                style = MaterialTheme.typography.labelSmall,
+                textAlign = when (index) {
+                    0 -> TextAlign.Start
+                    labels.lastIndex -> TextAlign.End
+                    else -> TextAlign.Center
+                },
+                modifier = if (labels.size == 1) Modifier else Modifier.weight(1f),
+            )
         }
-        val min = values.minOrNull() ?: 0.0
-        val max = values.maxOrNull() ?: min
-        val range = (max - min).takeIf { it > 0.0 } ?: 1.0
-        val path = Path()
-        values.forEachIndexed { index, value ->
-            val x = if (values.size == 1) size.width / 2 else size.width * index / (values.size - 1)
-            val y = size.height - ((value - min) / range * size.height * 0.8 + size.height * 0.1).toFloat()
-            if (index == 0) path.moveTo(x, y) else path.lineTo(x, y)
-            drawCircle(color, radius = 6f, center = Offset(x, y))
-        }
-        drawPath(path, color, style = Stroke(width = 5f, cap = StrokeCap.Round))
     }
 }
 
