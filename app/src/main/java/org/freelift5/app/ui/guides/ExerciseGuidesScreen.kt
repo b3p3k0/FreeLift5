@@ -78,7 +78,7 @@ private val guides = listOf(
         "Pull the bar toward the lower chest or upper abdomen without turning the movement into a standing shrug. Lower it under control and reset your brace.",
         listOf("Keep the torso position consistent", "Pull elbows behind you", "Reset before each rep"),
         listOf("Jerking the torso upright", "Rounding under load", "Letting the bar drift far forward"),
-        "Use stable blocks or rack safeties to establish height. Use a rock or something. That last part is a joke; use stable equipment.",
+        "Use proper rack pins, safeties, or stable blocks to establish height.",
     ),
     ExerciseGuide(
         CoreSlot.OVERHEAD_PRESS,

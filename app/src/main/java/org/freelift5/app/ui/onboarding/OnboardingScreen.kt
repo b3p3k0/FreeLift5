@@ -520,7 +520,7 @@ private fun ReviewPage(
         }
         if (slots.isNotEmpty()) {
             Text(
-                "Rows and deadlifts with an empty bar should begin at normal plate height using stable blocks or rack safeties. Use a rock or something.",
+                "Rows and deadlifts with an empty bar should begin at normal plate height. Use proper rack pins, safeties, or stable blocks, not a rock or something.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
