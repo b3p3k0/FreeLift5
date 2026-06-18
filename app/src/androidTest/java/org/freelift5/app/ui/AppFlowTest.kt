@@ -126,9 +126,12 @@ class AppFlowTest {
         waitForText("Workout A")
         compose.onNodeWithText("Rest").performScrollTo().assertIsDisplayed()
 
-        compose.onNodeWithText("Finish workout early")
-            .performScrollTo()
-            .performClick()
+        repeat(14) { completeCurrentWorkSet() }
+        waitForText("Review and finish")
+        check(compose.onAllNodesWithText("Rest").fetchSemanticsNodes().isEmpty()) {
+            "Rest timer should hide after the final set"
+        }
+        compose.onNodeWithText("Review and finish").performScrollTo().performClick()
         waitForText("Review workout")
         compose.onNodeWithText("Finish workout").performClick()
         waitForText("Next: Workout B")
@@ -149,5 +152,16 @@ class AppFlowTest {
         compose.waitUntil(timeoutMillis = 10_000) {
             compose.onAllNodesWithText(text).fetchSemanticsNodes().isNotEmpty()
         }
+    }
+
+    private fun completeCurrentWorkSet() {
+        compose.onAllNodesWithText("Complete ", substring = true)
+            .filter(hasClickAction())
+            .onFirst()
+            .performScrollTo()
+            .performClick()
+        waitForText("Save set")
+        compose.onNodeWithText("Save set").performClick()
+        compose.waitForIdle()
     }
 }

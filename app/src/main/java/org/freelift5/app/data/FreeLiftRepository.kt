@@ -266,6 +266,13 @@ class FreeLiftRepository(
         )
     }
 
+    suspend fun activeWorkoutHasOpenWorkSets(): Boolean =
+        activeWorkout.first()?.let { workout ->
+            workout.exercises.any { relation ->
+                relation.sets.count { !it.isWarmup } < relation.exercise.targetSets
+            }
+        } ?: false
+
     suspend fun finishWorkout(
         sessionId: Long,
         notes: String,

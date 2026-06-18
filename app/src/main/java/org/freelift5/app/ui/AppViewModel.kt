@@ -147,6 +147,10 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
             actualReps = actualReps,
             actualWeightGrams = actualWeightGrams,
         )
+        if (!repository.activeWorkoutHasOpenWorkSets()) {
+            stopTimer()
+            return@launchAction
+        }
         val duration = if (actualReps >= targetReps) {
             successfulRestSeconds
         } else {
