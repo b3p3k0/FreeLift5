@@ -38,6 +38,10 @@ app. Keep entries concise and tied to a concrete failure mode.
   need explicit navigation-bar inset padding; Material navigation components may
   handle this themselves, but custom rows will otherwise sit under gesture or
   three-button navigation.
+- Timer completion needs an explicit foreground cue, not just a state label.
+  If the Workout screen is visible, fire the in-app sound/haptic cue once and
+  use an actual border pulse so the user can tell rest has ended without relying
+  on background notification behavior.
 
 ## Release Continuity
 

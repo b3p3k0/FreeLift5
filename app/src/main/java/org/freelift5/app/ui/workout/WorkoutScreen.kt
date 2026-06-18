@@ -11,9 +11,12 @@ import android.os.Looper
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
+import android.view.HapticFeedbackConstants
+import android.view.View
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -57,7 +60,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
@@ -644,12 +647,14 @@ private fun RestTimerCard(
     viewModel: AppViewModel,
 ) {
     val context = LocalContext.current
+    val view = LocalView.current
     val store = remember { TimerStateStore(context) }
     var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
     val timerState = store.current()
     val remaining = timerState?.remainingSeconds(now) ?: 0
     val complete = timerState != null && remaining == 0
     var signaledEnd by remember { mutableLongStateOf(0L) }
+    val completionPulse = remember { Animatable(0f) }
     val backgroundPermission = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission(),
     ) { granted ->
@@ -665,24 +670,39 @@ private fun RestTimerCard(
     LaunchedEffect(timerState?.endAtEpochMillis, complete) {
         if (
             complete &&
-            timerState.endAtEpochMillis != signaledEnd &&
-            !state.settings.backgroundAlertsEnabled
+            timerState.endAtEpochMillis != signaledEnd
         ) {
             signaledEnd = timerState.endAtEpochMillis
-            signalInAppTimer(context, state)
+            signalInAppTimer(
+                context = context,
+                view = view,
+                soundEnabled = state.settings.soundEnabled,
+                vibrationEnabled = state.settings.vibrationEnabled,
+            )
+            if (state.settings.visualCueEnabled) {
+                completionPulse.snapTo(0f)
+                repeat(6) {
+                    completionPulse.animateTo(1f, tween(durationMillis = 140))
+                    completionPulse.animateTo(0f, tween(durationMillis = 260))
+                }
+            }
         }
     }
 
-    val borderColor by animateColorAsState(
-        targetValue = if (complete && state.settings.visualCueEnabled) {
-            MaterialTheme.colorScheme.primary
-        } else {
-            MaterialTheme.colorScheme.outline
-        },
-        label = "rest-complete-color",
+    val visualCueActive = complete && state.settings.visualCueEnabled
+    val pulseStrength = if (visualCueActive) maxOf(0.35f, completionPulse.value) else 0f
+    val borderColor = lerp(
+        MaterialTheme.colorScheme.outline,
+        MaterialTheme.colorScheme.primary,
+        pulseStrength,
     )
+    val borderWidth = if (visualCueActive) {
+        (2f + completionPulse.value * 3f).dp
+    } else {
+        1.dp
+    }
     if (timerState != null) {
-        OutlinedCard(border = BorderStroke(if (complete) 3.dp else 1.dp, borderColor)) {
+        OutlinedCard(border = BorderStroke(borderWidth, borderColor)) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -866,21 +886,41 @@ private fun inputNumber(grams: Long, unitSystem: UnitSystem): String {
 private fun formatSeconds(seconds: Int): String =
     String.format(Locale.US, "%d:%02d", seconds / 60, seconds % 60)
 
-private fun signalInAppTimer(context: Context, state: AppUiState) {
-    if (state.settings.soundEnabled) {
-        val tone = ToneGenerator(AudioManager.STREAM_NOTIFICATION, 80)
-        tone.startTone(ToneGenerator.TONE_PROP_BEEP2, 350)
-        Handler(Looper.getMainLooper()).postDelayed(tone::release, 500L)
+private fun signalInAppTimer(
+    context: Context,
+    view: View,
+    soundEnabled: Boolean,
+    vibrationEnabled: Boolean,
+) {
+    if (soundEnabled) {
+        val tone = ToneGenerator(AudioManager.STREAM_ALARM, 80)
+        if (tone.startTone(ToneGenerator.TONE_PROP_BEEP2, 350)) {
+            Handler(Looper.getMainLooper()).postDelayed(tone::release, 500L)
+        } else {
+            tone.release()
+        }
     }
-    if (state.settings.vibrationEnabled) {
+    if (vibrationEnabled) {
+        val haptic = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            HapticFeedbackConstants.CONFIRM
+        } else {
+            HapticFeedbackConstants.LONG_PRESS
+        }
+        if (view.performHapticFeedback(haptic)) return
+
         val vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             context.getSystemService(VibratorManager::class.java)?.defaultVibrator
         } else {
             @Suppress("DEPRECATION")
             context.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
         }
+        val effect = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            VibrationEffect.createPredefined(VibrationEffect.EFFECT_DOUBLE_CLICK)
+        } else {
+            VibrationEffect.createWaveform(longArrayOf(0, 180, 100, 180), -1)
+        }
         vibrator?.vibrate(
-            VibrationEffect.createWaveform(longArrayOf(0, 180, 100, 180), -1),
+            effect,
         )
     }
 }

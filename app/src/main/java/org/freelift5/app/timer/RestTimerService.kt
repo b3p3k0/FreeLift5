@@ -8,7 +8,9 @@ import android.content.pm.ServiceInfo
 import android.media.AudioManager
 import android.media.ToneGenerator
 import android.os.Build
+import android.os.Handler
 import android.os.IBinder
+import android.os.Looper
 import android.os.PowerManager
 import android.os.VibrationEffect
 import android.os.Vibrator
@@ -123,17 +125,22 @@ class RestTimerService : Service() {
 
     private fun completeTimer() {
         if (soundEnabled) {
-            ToneGenerator(AudioManager.STREAM_NOTIFICATION, 80).also { tone ->
-                tone.startTone(ToneGenerator.TONE_PROP_BEEP2, 350)
-                scope.launch {
-                    delay(500L)
+            ToneGenerator(AudioManager.STREAM_ALARM, 80).also { tone ->
+                if (tone.startTone(ToneGenerator.TONE_PROP_BEEP2, 350)) {
+                    Handler(Looper.getMainLooper()).postDelayed(tone::release, 500L)
+                } else {
                     tone.release()
                 }
             }
         }
         if (vibrationEnabled) {
+            val effect = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                VibrationEffect.createPredefined(VibrationEffect.EFFECT_DOUBLE_CLICK)
+            } else {
+                VibrationEffect.createWaveform(longArrayOf(0, 180, 100, 180), -1)
+            }
             vibrator()?.vibrate(
-                VibrationEffect.createWaveform(longArrayOf(0, 180, 100, 180), -1),
+                effect,
             )
         }
         getSystemService(android.app.NotificationManager::class.java)
