@@ -58,6 +58,10 @@ finish.
 
 [For developers](docs/DEVELOPMENT.md)
 
+## Disclaimer
+
+FreeLift5 is a workout tracker, not medical advice or a professional training service. Use your best judgment, start conservatively, and consult a qualified health care professional before beginning or changing an exercise program, especially if you have been inactive, have an injury, have a medical condition, or have symptoms or concerns.
+
 ## License
 
 FreeLift5 is licensed under GPL-3.0-or-later. See [LICENSE](LICENSE).
