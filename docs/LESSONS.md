@@ -31,3 +31,10 @@ app. Keep entries concise and tied to a concrete failure mode.
 - Drive workout helper UI from explicit exercise equipment metadata. Dumbbell
   programs should not inherit barbell-only copy, warmup assumptions, or plate
   calculators just because they track weight.
+
+## Android System UI
+
+- Treat bottom action rows as edge-to-edge content. Plain custom bottom bars
+  need explicit navigation-bar inset padding; Material navigation components may
+  handle this themselves, but custom rows will otherwise sit under gesture or
+  three-button navigation.
