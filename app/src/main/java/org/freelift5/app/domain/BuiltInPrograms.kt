@@ -12,8 +12,8 @@ package org.freelift5.app.domain
  *    needs per-day prescriptions stored on the day mapping rather than one per slot.
  *  - Madcow, Intermediate: weekly progression cadence and ramped / percentage set schemes.
  *
- * Data points marked TODO(confirm) are best-reading values from the StrongLifts pages and
- * are safe one-line edits once confirmed.
+ * Data points marked TODO(confirm) are best-reading values from source program notes
+ * and are safe one-line edits once confirmed.
  */
 object BuiltInPrograms {
 
@@ -206,7 +206,7 @@ object BuiltInPrograms {
     private fun original() = ProgramDefinition(
         id = "original",
         name = "Original 5x5",
-        summary = "The classic StrongLifts A/B routine: five compound lifts, add weight every workout.",
+        summary = "The classic A/B routine: five compound lifts, add weight every workout.",
         days = listOf(
             WorkoutDay(
                 key = "A",
