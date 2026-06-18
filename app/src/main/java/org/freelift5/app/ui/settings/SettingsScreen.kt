@@ -43,6 +43,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import java.nio.charset.StandardCharsets
+import org.freelift5.app.BuildConfig
 import org.freelift5.app.domain.BuiltInPrograms
 import org.freelift5.app.domain.ProgramDefinition
 import org.freelift5.app.domain.UnitSystem
@@ -376,7 +377,7 @@ fun SettingsScreen(
         }
 
         SettingsSection("About") {
-            Text("FreeLift5 0.1.0")
+            Text("FreeLift5 ${BuildConfig.VERSION_NAME}")
             Text("GPL-3.0-or-later")
             Text("Offline 5x5 workout tracker")
         }

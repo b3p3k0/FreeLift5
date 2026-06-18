@@ -55,6 +55,13 @@ Create `ANDROID_SIGNING_KEY_BASE64` with:
 base64 -w 0 freelift5-release.jks
 ```
 
-Push a tag such as `v0.1.0`. The release workflow runs tests and lint, builds a
+Push a tag such as `vX.Y.Z`. The release workflow runs tests and lint, builds a
 signed universal APK, generates its SHA-256 checksum, and attaches both files to
 the GitHub Release.
+
+Before tagging, scrub version-facing surfaces:
+
+- `app/build.gradle.kts` fallback `versionName`
+- Settings About dialog
+- README download links
+- `docs/releases/vX.Y.Z.md`

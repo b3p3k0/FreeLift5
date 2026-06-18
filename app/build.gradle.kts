@@ -30,7 +30,7 @@ android {
             .orNull
             ?.toIntOrNull()
             ?: 1
-        versionName = providers.gradleProperty("VERSION_NAME").orNull ?: "0.1.0"
+        versionName = providers.gradleProperty("VERSION_NAME").orNull ?: "0.1.2"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true

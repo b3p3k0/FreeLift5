@@ -38,3 +38,9 @@ app. Keep entries concise and tied to a concrete failure mode.
   need explicit navigation-bar inset padding; Material navigation components may
   handle this themselves, but custom rows will otherwise sit under gesture or
   three-button navigation.
+
+## Release Continuity
+
+- Do not hardcode user-facing app versions in Compose. Read the build version
+  metadata and scrub README download links, release notes, and About copy before
+  every tagged APK.

@@ -2,9 +2,9 @@
 
 FreeLift5 is an offline Android tracker for the classic 5x5 barbell routine.
 
-[![Download FreeLift5 APK](https://img.shields.io/badge/Download-FreeLift5%20APK-007ea7?style=for-the-badge)](https://github.com/b3p3k0/FreeLift5/releases/download/v0.1.1/FreeLift5-v0.1.1.apk)
+[![Download FreeLift5 APK](https://img.shields.io/badge/Download-FreeLift5%20APK-007ea7?style=for-the-badge)](https://github.com/b3p3k0/FreeLift5/releases/download/v0.1.2/FreeLift5-v0.1.2.apk)
 
-[Direct APK download for Android 9+](https://github.com/b3p3k0/FreeLift5/releases/download/v0.1.1/FreeLift5-v0.1.1.apk)
+[Direct APK download for Android 9+](https://github.com/b3p3k0/FreeLift5/releases/download/v0.1.2/FreeLift5-v0.1.2.apk)
 
 The 5x5 approach comes from the old-timey tradition of short, full-body
 training that requires minimal equipment, built around compound lifts and steady progression. Its exact origin is lost to history, but its simplicity and results have made it a lsting staple in fitness. FreeLift5 follows that lineage: simple workouts, stable progress, and enough structure to keep training moving while preseving  your data sovreignity.

@@ -15,6 +15,7 @@ import androidx.compose.ui.test.printToString
 import androidx.lifecycle.Lifecycle
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import kotlinx.coroutines.runBlocking
+import org.freelift5.app.BuildConfig
 import org.freelift5.app.FreeLiftApplication
 import org.freelift5.app.MainActivity
 import org.junit.Before
@@ -75,6 +76,9 @@ class AppFlowTest {
 
         clickNavigationItem("Settings")
         compose.onNodeWithText("No account. No telemetry. No network access. Your data stays on your device.")
+            .assertIsDisplayed()
+        compose.onNodeWithText("FreeLift5 ${BuildConfig.VERSION_NAME}")
+            .performScrollTo()
             .assertIsDisplayed()
 
         clickNavigationItem("Workout")
