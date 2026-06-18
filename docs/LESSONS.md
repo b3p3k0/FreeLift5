@@ -44,3 +44,9 @@ app. Keep entries concise and tied to a concrete failure mode.
 - Do not hardcode user-facing app versions in Compose. Read the build version
   metadata and scrub README download links, release notes, and About copy before
   every tagged APK.
+
+## Privacy Boundary
+
+- External web links do not require adding app network permission. Use Android's
+  URL intent handoff and keep the literal URL visible so the app remains offline
+  even when users choose to open documentation in their browser.

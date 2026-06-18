@@ -1,7 +1,11 @@
 package org.freelift5.app.ui.settings
 
 import android.Manifest
+import android.content.ActivityNotFoundException
+import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -61,6 +65,9 @@ private enum class PermissionPurpose {
     WORKOUT_REMINDER,
     BODY_REMINDER,
 }
+
+private const val REPOSITORY_URL = "https://github.com/b3p3k0/FreeLift5"
+private const val GPL_URL = "https://www.gnu.org/licenses/gpl-3.0.en.html"
 
 @Composable
 fun SettingsScreen(
@@ -380,6 +387,8 @@ fun SettingsScreen(
             Text("FreeLift5 ${BuildConfig.VERSION_NAME}")
             Text("GPL-3.0-or-later")
             Text("Offline 5x5 workout tracker")
+            ExternalLinkButton("GitHub repository", REPOSITORY_URL, context)
+            ExternalLinkButton("GPL-3.0 full text", GPL_URL, context)
         }
 
         HorizontalDivider()
@@ -488,6 +497,34 @@ fun SettingsScreen(
                 TextButton(onClick = { pendingProgramSwitch = null }) { Text("Cancel") }
             },
         )
+    }
+}
+
+@Composable
+private fun ExternalLinkButton(label: String, url: String, context: Context) {
+    OutlinedButton(
+        onClick = { openExternalUrl(context, url) },
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Column(horizontalAlignment = Alignment.Start) {
+            Text(label)
+            Text(
+                url,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
+private fun openExternalUrl(context: Context, url: String) {
+    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
+        addCategory(Intent.CATEGORY_BROWSABLE)
+    }
+    try {
+        context.startActivity(intent)
+    } catch (_: ActivityNotFoundException) {
+        // The visible URL remains available if the device has no browser or link handler.
     }
 }
 

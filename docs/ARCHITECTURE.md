@@ -66,10 +66,12 @@ rotation, activity recreation, backgrounding, or process death.
 
 ## Privacy Boundary
 
-FreeLift5 has no network permission or networking dependency. Room, DataStore,
-timer state, and export staging remain in app-private storage. Android cloud
-backup and device-transfer backup are disabled. Export destinations and share
-targets are chosen explicitly by the user through Android system UI.
+FreeLift5 has no network permission or networking dependency. About links use
+Android `ACTION_VIEW` intents to hand public URLs to the OS and the user's
+browser; the app does not fetch those pages itself. Room, DataStore, timer
+state, and export staging remain in app-private storage. Android cloud backup
+and device-transfer backup are disabled. Export destinations and share targets
+are chosen explicitly by the user through Android system UI.
 
 The only runtime permission is Android 13+ notification access, requested after
 the user opts into background timer alerts or reminders.
