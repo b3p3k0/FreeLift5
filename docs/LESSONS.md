@@ -42,6 +42,9 @@ app. Keep entries concise and tied to a concrete failure mode.
   If the Workout screen is visible, fire the in-app sound/haptic cue once and
   use an actual border pulse so the user can tell rest has ended without relying
   on background notification behavior.
+- Progress markers should not use placeholder numbers that look like completed
+  data. Leave pending workout sets blank and change the marker styling only when
+  a saved set exists.
 
 ## Release Continuity
 

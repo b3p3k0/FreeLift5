@@ -3,6 +3,7 @@ package org.freelift5.app.ui
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.filter
 import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
@@ -94,6 +95,9 @@ class AppFlowTest {
         clickNavigationItem("Workout")
         compose.onNodeWithText("Start workout").performClick()
         waitForText("Workout A")
+        compose.onAllNodesWithContentDescription("Set 1 pending")
+            .fetchSemanticsNodes()
+            .also { check(it.isNotEmpty()) { "Expected at least one pending set marker" } }
 
         compose.waitForIdle()
         val completeSetNodes = compose
@@ -109,6 +113,9 @@ class AppFlowTest {
         waitForText("Not now")
         compose.onNodeWithText("Not now").performClick()
         waitForText("Rest")
+        compose.onNodeWithContentDescription("Set 1 complete: 5 reps")
+            .performScrollTo()
+            .assertIsDisplayed()
 
         compose.activityRule.scenario.moveToState(Lifecycle.State.CREATED)
         compose.activityRule.scenario.moveToState(Lifecycle.State.RESUMED)

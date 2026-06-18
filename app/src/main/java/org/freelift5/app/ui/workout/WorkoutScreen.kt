@@ -17,8 +17,11 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
@@ -27,6 +30,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -35,7 +39,6 @@ import androidx.compose.material.icons.outlined.Calculate
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -63,6 +66,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
@@ -444,20 +449,54 @@ private fun ExerciseProgressCard(
             }
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 repeat(relation.exercise.targetSets) { index ->
-                    val set = workSets.getOrNull(index)
-                    AssistChip(
-                        onClick = {},
-                        enabled = false,
-                        label = {
-                            Text(
-                                set?.actualReps?.toString()
-                                    ?: "${index + 1}",
-                            )
-                        },
+                    SetProgressBox(
+                        setNumber = index + 1,
+                        actualReps = workSets.getOrNull(index)?.actualReps,
                     )
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun SetProgressBox(setNumber: Int, actualReps: Int?) {
+    val completed = actualReps != null
+    val containerColor = if (completed) {
+        MaterialTheme.colorScheme.primaryContainer
+    } else {
+        MaterialTheme.colorScheme.surface
+    }
+    val borderColor = if (completed) {
+        MaterialTheme.colorScheme.primary
+    } else {
+        MaterialTheme.colorScheme.outlineVariant
+    }
+    val textColor = if (completed) {
+        MaterialTheme.colorScheme.onPrimaryContainer
+    } else {
+        MaterialTheme.colorScheme.onSurfaceVariant
+    }
+    Box(
+        modifier = Modifier
+            .height(36.dp)
+            .widthIn(min = 44.dp)
+            .background(containerColor, MaterialTheme.shapes.small)
+            .border(1.dp, borderColor, MaterialTheme.shapes.small)
+            .semantics {
+                contentDescription = if (completed) {
+                    "Set $setNumber complete: $actualReps reps"
+                } else {
+                    "Set $setNumber pending"
+                }
+            },
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            actualReps?.toString().orEmpty(),
+            color = textColor,
+            fontWeight = FontWeight.SemiBold,
+        )
     }
 }
 
